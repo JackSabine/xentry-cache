@@ -1,0 +1,2 @@
+${DV_ROOT}/tests/tests.sv
+${DV_ROOT}/tests/no_test.sv

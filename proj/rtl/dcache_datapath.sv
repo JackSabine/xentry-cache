@@ -1,9 +1,9 @@
-module dcache_datapath #(
+module dcache_datapath import xentry_pkg::*; #(
     parameter LINE_SIZE = 32, // 32 Bytes per block
-    parameter OFS_SIZE,
-    parameter SET_SIZE,
-    parameter TAG_SIZE,
-    parameter NUM_SETS,
+    parameter OFS_SIZE = 0,
+    parameter SET_SIZE = 0,
+    parameter TAG_SIZE = 0,
+    parameter NUM_SETS = 0,
     parameter XLEN = 32
 
 ) (
@@ -41,8 +41,6 @@ localparam WORDS_PER_LINE = LINE_SIZE / BYTES_PER_WORD;
 localparam BYTE_SELECT_SIZE = $clog2(BYTES_PER_WORD);
 localparam WORD_SELECT_SIZE = OFS_SIZE - BYTE_SELECT_SIZE;
 
-int i_set, i_word, i_byte;
-
 ///////////////////////////////////////////////////////////////////
 //                    Cache memory structures                    //
 ///////////////////////////////////////////////////////////////////
@@ -76,9 +74,9 @@ end
 ///////////////////////////////////////////////////////////////////
 //                    Cache metadata logic                       //
 ///////////////////////////////////////////////////////////////////
-always_ff begin
+always_ff @(posedge clk) begin
     if (reset) begin
-        for (i_set = 0; i < NUM_SETS; i_set = i_set + 1) begin
+        for (int i_set = 0; i_set < NUM_SETS; i_set = i_set + 1) begin
             valid_array[i_set] <= 1'b0;
         end
     end else begin
@@ -133,8 +131,8 @@ logic [BYTES_PER_WORD-1:0][7:0] write_bus;
 logic [BYTES_PER_WORD-1:0][7:0] w_data;
 
 always_comb begin : write_active_logic
-    for (i_set = 0; i_set < NUM_SETS; i_set = i_set + 1) begin
-        for (i_word = 0; i_word < WORDS_PER_LINE; i_word = i_word + 1) begin
+    for (int i_set = 0; i_set < NUM_SETS; i_set = i_set + 1) begin
+        for (int i_word = 0; i_word < WORDS_PER_LINE; i_word = i_word + 1) begin
             w_active[i_set][i_word] =
                 (req_set == i_set) & // This set is selected
                 (w_word_select == i_word) & // This word is selected
@@ -147,42 +145,42 @@ always_comb begin : write_bus_logic
     w_data = req_data;
 
     // B0
-    unique casex (1'b1)
+    unique case (1'b1)
         (op_size == BYTE) & (w_byte_select == 2'b00): write_bus[0] = w_data[0];
-        (op_size == HALF) & (w_byte_select == 2'b0x): write_bus[0] = w_data[0];
-        (op_size == WORD) & (w_byte_select == 2'bxx): write_bus[0] = w_data[0];
+        (op_size == HALF) & (w_byte_select == 2'b0?): write_bus[0] = w_data[0];
+        (op_size == WORD) & (w_byte_select == 2'b??): write_bus[0] = w_data[0];
         default:                                      write_bus[0] = line_word[0];
     endcase
 
     // B1
-    unique casex (1'b1)
+    unique case (1'b1)
         (op_size == BYTE) & (w_byte_select == 2'b01): write_bus[1] = w_data[0];
-        (op_size == HALF) & (w_byte_select == 2'b0x): write_bus[1] = w_data[1];
-        (op_size == WORD) & (w_byte_select == 2'bxx): write_bus[1] = w_data[1];
+        (op_size == HALF) & (w_byte_select == 2'b0?): write_bus[1] = w_data[1];
+        (op_size == WORD) & (w_byte_select == 2'b??): write_bus[1] = w_data[1];
         default:                                      write_bus[1] = line_word[1];
     endcase
 
     // B2
-    unique casex (1'b1)
+    unique case (1'b1)
         (op_size == BYTE) & (w_byte_select == 2'b10): write_bus[2] = w_data[0];
-        (op_size == HALF) & (w_byte_select == 2'b1x): write_bus[2] = w_data[0];
-        (op_size == WORD) & (w_byte_select == 2'bxx): write_bus[2] = w_data[2];
+        (op_size == HALF) & (w_byte_select == 2'b1?): write_bus[2] = w_data[0];
+        (op_size == WORD) & (w_byte_select == 2'b??): write_bus[2] = w_data[2];
         default:                                      write_bus[2] = line_word[2];
     endcase
 
     // B3
-    unique casex (1'b1)
+    unique case (1'b1)
         (op_size == BYTE) & (w_byte_select == 2'b11): write_bus[3] = w_data[0];
-        (op_size == HALF) & (w_byte_select == 2'b1x): write_bus[3] = w_data[1];
-        (op_size == WORD) & (w_byte_select == 2'bxx): write_bus[3] = w_data[3];
+        (op_size == HALF) & (w_byte_select == 2'b1?): write_bus[3] = w_data[1];
+        (op_size == WORD) & (w_byte_select == 2'b??): write_bus[3] = w_data[3];
         default:                                      write_bus[3] = line_word[3];
     endcase
 end
 
 always_ff @(posedge clk) begin
-    for (i_set = 0; i_set < NUM_SETS; i_set = i_set + 1) begin
-        for (i_word = 0; i_word < WORDS_PER_LINE; i_word = i_word + 1) begin
-            for (i_byte = 0; i_byte < BYTES_PER_WORD; i_byte = i_byte + 1) begin
+    for (int i_set = 0; i_set < NUM_SETS; i_set = i_set + 1) begin
+        for (int i_word = 0; i_word < WORDS_PER_LINE; i_word = i_word + 1) begin
+            for (int i_byte = 0; i_byte < BYTES_PER_WORD; i_byte = i_byte + 1) begin
                 if (w_active[i_set][i_word]) begin
                     data_lines[i_set][i_word][i_byte] <= write_bus[i_byte];
                     dirty_array[i_set] <= 1'b1;

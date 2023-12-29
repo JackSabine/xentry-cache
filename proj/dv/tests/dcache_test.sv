@@ -37,7 +37,8 @@ dcache_datapath #(
     .NUM_SETS(NUM_SETS),
     .XLEN(XLEN)
 ) dut (
-
+    .clk(clk),
+    .reset(reset)
 );
 
 initial begin

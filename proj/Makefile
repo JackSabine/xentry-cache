@@ -57,7 +57,6 @@ waves: | work
 	cd $(WORKDIR)
 	xsim --gui $(TB_TOP)_snapshot.wdb
 
-.PHONY: work
 work:
 	mkdir $(WORKDIR)
 

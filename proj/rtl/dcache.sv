@@ -1,4 +1,4 @@
-module dcache #(
+module dcache import xentry_pkg::*; #(
     parameter LINE_SIZE = 32, // 32 Bytes per block
     parameter CACHE_SIZE = 1024, // Bytes
     parameter XLEN = 32 // bits
@@ -32,17 +32,89 @@ localparam OFS_POS = 0,
            SET_POS = OFS_POS + OFS_SIZE,
            TAG_POS = SET_POS + SET_SIZE;
 
-wire [OFS_SIZE-1:0] req_ofs;
-wire [SET_SIZE-1:0] req_set;
-wire [TAG_SIZE-1:0] req_tag;
+wire [OFS_SIZE-1:0] pipe_req_ofs;
+wire [SET_SIZE-1:0] pipe_req_set;
+wire [TAG_SIZE-1:0] pipe_req_tag;
 
-assign req_ofs = pipe_address[OFS_POS +: OFS_SIZE];
-assign req_set = pipe_address[SET_POS +: SET_SIZE];
-assign req_tag = pipe_address[TAG_POS +: TAG_SIZE];
+assign pipe_req_ofs = pipe_req_address[OFS_POS +: OFS_SIZE];
+assign pipe_req_set = pipe_req_address[SET_POS +: SET_SIZE];
+assign pipe_req_tag = pipe_req_address[TAG_POS +: TAG_SIZE];
 
 ///////////////////////////////////////////////////////////////////
 //                 controller <-> datapath signals               //
 ///////////////////////////////////////////////////////////////////
+wire flush_mode;
+wire load_mode;
+wire clear_selected_dirty_bit;
+wire clear_selected_valid_bit;
+wire finish_new_line_install;
+wire set_new_l2_block_address;
+wire reset_counter;
+wire decrement_counter;
+wire counter_done;
+wire hit;
+wire dirty_miss;
+wire clean_miss;
 
+dcache_datapath #(
+    .LINE_SIZE(LINE_SIZE),
+    .OFS_SIZE(OFS_SIZE),
+    .SET_SIZE(SET_SIZE),
+    .TAG_SIZE(TAG_SIZE),
+    .NUM_SETS(NUM_SETS),
+    .XLEN(XLEN)
+) datapath (
+    .clk(clk),
+    .reset(reset),
+
+    .req_ofs(pipe_req_ofs),
+    .req_set(pipe_req_set),
+    .req_tag(pipe_req_tag),
+    .req_size(pipe_req_size),
+    .req_type(pipe_req_type),
+    .req_valid(pipe_req_valid),
+    .req_data_to_store(),
+    .req_data_to_return(pipe_word),
+
+    .l2_address(l2_address),
+    .data_from_l2(l2_word),
+    .data_to_l2(),
+
+    .flush_mode(flush_mode),
+    .load_mode(load_mode),
+    .clear_selected_dirty_bit(clear_selected_dirty_bit),
+    .clear_selected_valid_bit(clear_selected_valid_bit),
+    .finish_new_line_install(finish_new_line_install),
+    .set_new_l2_block_address(set_new_l2_block_address),
+    .reset_counter(reset_counter),
+    .decrement_counter(decrement_counter),
+    .counter_done(counter_done),
+    .hit(hit),
+    .dirty_miss(dirty_miss),
+    .clean_miss(clean_miss)
+);
+
+dcache_controller controller (
+    .clk(clk),
+    .reset(reset),
+
+    .counter_done(counter_done),
+    .hit(hit),
+    .dirty_miss(dirty_miss),
+    .clean_miss(clean_miss),
+
+    .flush_mode(flush_mode),
+    .load_mode(load_mode),
+    .clear_selected_dirty_bit(clear_selected_dirty_bit),
+    .clear_selected_valid_bit(clear_selected_valid_bit),
+    .finish_new_line_install(finish_new_line_install),
+    .set_new_l2_block_address(set_new_l2_block_address),
+    .reset_counter(reset_counter),
+    .decrement_counter(decrement_counter),
+
+    .l2_access(l2_access)
+);
+
+assign pipe_word_valid = hit;
 
 endmodule

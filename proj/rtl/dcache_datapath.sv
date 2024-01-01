@@ -12,19 +12,20 @@ module dcache_datapath import xentry_pkg::*; #(
     input wire reset,
 
     //// PIPELINE ////
-    input wire [OFS_SIZE-1:0] req_ofs,
-    input wire [SET_SIZE-1:0] req_set,
-    input wire [TAG_SIZE-1:0] req_tag,
-    input memory_operation_size_e req_size,
-    input memory_operation_e req_type,
-    input wire req_valid,
-    input wire [XLEN-1:0] req_data_to_store,
-    output logic [XLEN-1:0] req_data_to_return,
+    input wire [OFS_SIZE-1:0] pipe_req_ofs,
+    input wire [SET_SIZE-1:0] pipe_req_set,
+    input wire [TAG_SIZE-1:0] pipe_req_tag,
+    input wire memory_operation_size_e pipe_req_size,
+    input wire memory_operation_e pipe_req_type,
+    input wire pipe_req_valid,
+    input wire [XLEN-1:0] pipe_word_to_store,
+    output logic [XLEN-1:0] pipe_fetched_word,
+    output logic pipe_fetched_word_valid,
 
     //// HIGHER MEMORY ////
-    output wire [XLEN-1:0] l2_address,
-    input wire [XLEN-1:0] data_from_l2,
-    output logic [XLEN-1:0] data_to_l2,
+    output wire [XLEN-1:0] l2_req_address,
+    input wire [XLEN-1:0] l2_fetched_word,
+    output logic [XLEN-1:0] l2_word_to_store,
 
     //// DATAPATH/CONTROLLER SIGNALS ////
     input wire flush_mode,
@@ -75,21 +76,21 @@ end
 ///////////////////////////////////////////////////////////////////
 //                        Steering logic                         //
 ///////////////////////////////////////////////////////////////////
-wire [WORD_SELECT_SIZE-1:0] req_word_select, r_word_select, w_word_select;
-wire [BYTE_SELECT_SIZE-1:0] req_byte_select, w_byte_select;
+wire [WORD_SELECT_SIZE-1:0] pipe_req_word_select, r_word_select, w_word_select;
+wire [BYTE_SELECT_SIZE-1:0] pipe_req_byte_select, w_byte_select;
 memory_operation_size_e op_size;
 memory_operation_e op_type;
 
-assign {req_word_select, req_byte_select} = req_ofs;
-assign r_word_select = flush_mode ? counter : req_word_select;
-assign w_word_select = load_mode ? counter : req_word_select;
-assign w_byte_select = load_mode ? {BYTE_SELECT_SIZE{1'b0}} : req_byte_select;
+assign {pipe_req_word_select, pipe_req_byte_select} = pipe_req_ofs;
+assign r_word_select = flush_mode ? counter : pipe_req_word_select;
+assign w_word_select = load_mode ? counter : pipe_req_word_select;
+assign w_byte_select = load_mode ? {BYTE_SELECT_SIZE{1'b0}} : pipe_req_byte_select;
 
 always_comb begin
     if (load_mode || flush_mode) op_size = WORD;
-    else                         op_size = req_size;
+    else                         op_size = pipe_req_size;
 
-    if (req_valid) op_type = req_type;
+    if (pipe_req_valid) op_type = pipe_req_type;
     else           op_type = LOAD;
 end
 
@@ -103,15 +104,15 @@ always_ff @(posedge clk) begin
         end
     end else begin
         if (clear_selected_dirty_bit) begin
-            dirty_array[req_set] <= 1'b0;
+            dirty_array[pipe_req_set] <= 1'b0;
         end
 
 
         if (clear_selected_valid_bit) begin
-            valid_array[req_set] <= 1'b0;
+            valid_array[pipe_req_set] <= 1'b0;
         end else if (finish_new_line_install) begin
-            valid_array[req_set] <= 1'b1;
-            tag_array[req_set] <= req_tag;
+            valid_array[pipe_req_set] <= 1'b1;
+            tag_array[pipe_req_set] <= pipe_req_tag;
         end
     end
 end
@@ -124,10 +125,10 @@ logic tag_match;
 always_comb begin
     {hit, clean_miss, dirty_miss} = 3'b000;
 
-    tag_match = tag_array[req_set] == req_tag;
+    tag_match = tag_array[pipe_req_set] == pipe_req_tag;
 
-    if (req_valid) begin
-        casex({valid_array[req_set], tag_match, dirty_array[req_set]})
+    if (pipe_req_valid) begin
+        casex({valid_array[pipe_req_set], tag_match, dirty_array[pipe_req_set]})
         3'b0??: clean_miss = 1'b1;
         3'b100: clean_miss = 1'b1;
         3'b101: dirty_miss = 1'b1;
@@ -135,6 +136,8 @@ always_comb begin
         default: {hit, clean_miss, dirty_miss} = 3'bxxx;
         endcase
     end
+
+    pipe_fetched_word_valid = hit;
 end
 
 
@@ -145,11 +148,11 @@ logic [WORDS_PER_LINE-1:0][BYTES_PER_WORD-1:0][7:0] single_data_line;
 logic [BYTES_PER_WORD-1:0][7:0] line_word;
 
 always_comb begin
-    single_data_line = data_lines[req_set];
+    single_data_line = data_lines[pipe_req_set];
     line_word = single_data_line[r_word_select];
 
-    req_data_to_return = line_word;
-    data_to_l2 = line_word;
+    pipe_fetched_word = line_word;
+    l2_word_to_store = line_word;
 end
 
 ///////////////////////////////////////////////////////////////////
@@ -163,7 +166,7 @@ always_comb begin : write_active_logic
     for (int i_set = 0; i_set < NUM_SETS; i_set = i_set + 1) begin
         for (int i_word = 0; i_word < WORDS_PER_LINE; i_word = i_word + 1) begin
             w_active[i_set][i_word] =
-                (req_set == i_set) & // This set is selected
+                (pipe_req_set == i_set) & // This set is selected
                 (w_word_select == i_word) & // This word is selected
                 ((hit & op_type == STORE) | load_mode); // A hit and a store OR just load_mode
         end
@@ -171,7 +174,7 @@ always_comb begin : write_active_logic
 end : write_active_logic
 
 always_comb begin : write_bus_logic
-    w_data = load_mode ? data_from_l2 : req_data_to_store;
+    w_data = load_mode ? l2_fetched_word : pipe_word_to_store;
 
     // B0
     unique casex (1'b1)
@@ -227,12 +230,12 @@ logic [XLEN-OFS_SIZE-1:0] l2_block_address;
 always_ff @(posedge clk) begin
     if (set_new_l2_block_address) begin
         l2_block_address <= {
-            dirty_miss ? tag_array[req_set] : req_tag,
-            req_set
+            dirty_miss ? tag_array[pipe_req_set] : pipe_req_tag,
+            pipe_req_set
         };
     end
 end
 
-assign l2_address = {l2_block_address, counter, {BYTE_SELECT_SIZE{1'b0}}};
+assign l2_req_address = {l2_block_address, counter, {BYTE_SELECT_SIZE{1'b0}}};
 
 endmodule

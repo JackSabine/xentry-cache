@@ -7,7 +7,8 @@ package xentry_pkg;
 
     typedef enum logic {
         STORE = 1'b0,
-        LOAD
+        LOAD = 1'b1,
+        MO_UNKNOWN = 1'bx
     } memory_operation_e;
 
 endpackage: xentry_pkg

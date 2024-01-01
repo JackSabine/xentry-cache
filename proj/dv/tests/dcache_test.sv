@@ -23,53 +23,35 @@ assign timeout = (timer >= 500);
 // Signals             //
 /////////////////////////
 
-//// SIGNALS FROM PIPELINE ////
+//// SIGNALS FROM PIPELINE (TO DCACHE) ////
 logic [XLEN-1:0] pipe_req_address;
 memory_operation_size_e pipe_req_size = WORD;
 memory_operation_e pipe_req_type = LOAD;
 logic pipe_req_valid = 1'b0;
+logic [XLEN-1:0] pipe_word_to_store;
 
-//// SIGNALS TO PIPELINE ////
-wire [XLEN-1:0] pipe_word;
-wire pipe_word_valid;
+//// SIGNALS TO PIPELINE (FROM DCACHE) ////
+wire [XLEN-1:0] pipe_fetched_word;
+wire pipe_fetched_word_valid;
 
-//// SIGNALS TO L2 ////
-wire [XLEN-1:0] l2_address;
-wire l2_access;
+//// SIGNALS TO L2 (FROM DCACHE) ////
+wire [XLEN-1:0] l2_req_address;
+memory_operation_e l2_req_type;
+wire l2_req_valid;
+wire [XLEN-1:0] l2_word_to_store;
 
-//// SIGNALS FROM L2 ////
-wire [XLEN-1:0] l2_word;
-wire l2_word_valid;
+//// SIGNALS FROM L2 (TO DCACHE) ////
+logic [XLEN-1:0] l2_fetched_word;
+logic l2_fetched_word_valid;
 
 ///////////////////////////////////
 // Environment and golden output //
 ///////////////////////////////////
 
-int i;
+bit [XLEN-1:0] value;
 
-logic [XLEN-1:0] addresses_to_load [0:1] = {
-    32'hBEEF67_B_A,
-    32'h000188_C_F
-};
-
-logic [XLEN-1:0] faux_memory [0:7] = {
-    32'h01234567,
-    32'h89ABCDEF,
-    32'h00112233,
-    32'h44556677,
-    32'h8899AABB,
-    32'hCCDDEEFF,
-    32'hFEDCBA98,
-    32'h76543210
-};
-
-logic [XLEN-1:0] golden_loaded_value;
-
-assign golden_loaded_value = faux_memory[addresses_to_load[i][3:2]];
-
-logic [XLEN-1:0] loaded_value;
-
-assign match = (loaded_value == golden_loaded_value);
+logic [XLEN-1:0] golden_memory_structure [int];
+logic [XLEN-1:0] recreated_memory_structure [int];
 
 dcache #(
     .LINE_SIZE(LINE_SIZE),
@@ -77,30 +59,89 @@ dcache #(
     .XLEN(XLEN)
 ) dut (.*);
 
-assign l2_word = l2_access ? faux_memory[l2_address[3:2]] : 32'hx;
-assign l2_word_valid = l2_access;
+always @(l2_req_address, l2_req_valid, l2_req_type) begin
+    if (golden_memory_structure.exists(l2_req_address)) begin
+        l2_fetched_word = golden_memory_structure[l2_req_address];
+    end else begin
+        l2_fetched_word = 32'hx;
+    end
+    l2_fetched_word_valid = (l2_req_valid & l2_req_type == LOAD);
+end
 
-always_ff @(posedge clk) begin
-    if (reset) begin
-        loaded_value <= 'b0;
-    end else if (pipe_word_valid) begin
-        loaded_value <= pipe_word;
+
+
+initial forever begin
+    @(posedge clk);
+    if (pipe_fetched_word_valid) begin
+        recreated_memory_structure[pipe_req_address] = pipe_fetched_word;
     end
 end
 
+function void print_memories();
+    $display("### Full memory printout ###");
+    $display("# Golden #");
+    foreach (golden_memory_structure[i]) $display("%08x: %08x", i, golden_memory_structure[i]);
+    $display("# Recreated #");
+    foreach (recreated_memory_structure[i]) $display("%08x: %08x", i, recreated_memory_structure[i]);
+endfunction
+
+function bit test_if_memories_equal();
+    bit fail;
+    int matching_valid_entries;
+
+    fail = 0;
+    matching_valid_entries = 0;
+
+    if (golden_memory_structure.size != recreated_memory_structure.size) begin
+        $display("Memory structures differ in size");
+        fail = 1;
+    end
+
+    foreach (golden_memory_structure[i]) begin
+        if (recreated_memory_structure.exists(i)) begin
+            if (recreated_memory_structure[i] == golden_memory_structure[i]) begin
+                matching_valid_entries++;
+            end else begin
+                $error(
+                    "data in recreated memory doesn't match golden memory at address 0x%08x - recreated(0x%08x) golden(0x%08x)",
+                    i, recreated_memory_structure[i],
+                    golden_memory_structure[i]
+                );
+                fail = 1;
+            end
+        end else begin
+            $error("recreated memory doesn't contain data at address 0x%08x", i);
+            fail = 1;
+        end
+    end
+
+    if (fail) begin
+        print_memories();
+    end
+
+    return !fail;
+endfunction
+
 initial begin
+    golden_memory_structure[32'hBEEF67_B_A] = std::randomize(value);
+    golden_memory_structure[32'h000188_C_F] = std::randomize(value);
+    golden_memory_structure[32'h000188_0_F] = std::randomize(value);
+
     repeat(5) @(posedge clk);
     reset = 0;
     repeat(5) @(posedge clk);
 
-    for (i = 0; i < $size(addresses_to_load); i = i + 1) begin
-        pipe_req_address = addresses_to_load[i];
+    foreach(golden_memory_structure[i]) begin
+        pipe_req_address = i;
         pipe_req_valid = 1'b1;
-        @(posedge pipe_word_valid);
+        @(posedge pipe_fetched_word_valid);
         @(posedge clk);
         pipe_req_valid = 1'b0;
         repeat(5) @(posedge clk);
     end
+
+    if (test_if_memories_equal() == 1'b1) $display("Pass");
+    else $display("Fail");
 
     $finish(1);
 end

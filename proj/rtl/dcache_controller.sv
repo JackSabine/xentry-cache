@@ -1,13 +1,18 @@
-module dcache_controller (
+module dcache_controller import xentry_pkg::*; (
     //// TOP LEVEL ////
     input wire clk,
     input wire reset,
 
+    //// HIGHER MEMORY ////
+    input wire l2_fetched_word_valid,
+    output memory_operation_e l2_req_type,
+    output logic l2_req_valid,
+
     //// DATAPATH/CONTROLLER SIGNALS ////
     input wire counter_done,
-    input logic hit,
-    input logic dirty_miss,
-    input logic clean_miss,
+    input wire hit,
+    input wire dirty_miss,
+    input wire clean_miss,
 
     output logic flush_mode,
     output logic load_mode,
@@ -16,15 +21,14 @@ module dcache_controller (
     output logic finish_new_line_install,
     output logic set_new_l2_block_address,
     output logic reset_counter,
-    output logic decrement_counter,
-    output logic l2_access
+    output logic decrement_counter
 );
 
 typedef enum logic[1:0] {
-    IDLE = 2'b00,
-    LOAD = 2'b11,
-    FLUSH = 2'b10,
-    UNKNOWN = 2'bxx
+    ST_IDLE = 2'b00,
+    ST_LOAD = 2'b11,
+    ST_FLUSH = 2'b10,
+    ST_UNKNOWN = 2'bxx
 } dcache_state_e;
 
 dcache_state_e state, next_state;
@@ -32,24 +36,24 @@ dcache_state_e state, next_state;
 //// NEXT STATE LOGIC ////
 always_comb begin
     case (state)
-        IDLE: unique casex (1'b1)
-            hit:        next_state = IDLE;
-            dirty_miss: next_state = FLUSH;
-            clean_miss: next_state = LOAD;
-            default:    next_state = IDLE;
+        ST_IDLE: unique casex (1'b1)
+            hit:        next_state = ST_IDLE;
+            dirty_miss: next_state = ST_FLUSH;
+            clean_miss: next_state = ST_LOAD;
+            default:    next_state = ST_IDLE;
         endcase
 
-        FLUSH: begin
-            if (counter_done) next_state = LOAD;
-            else              next_state = FLUSH;
+        ST_FLUSH: begin
+            if (counter_done) next_state = ST_LOAD;
+            else              next_state = ST_FLUSH;
         end
 
-        LOAD: begin
-            if (counter_done) next_state = IDLE;
-            else              next_state = LOAD;
+        ST_LOAD: begin
+            if (counter_done) next_state = ST_IDLE;
+            else              next_state = ST_LOAD;
         end
 
-        default: next_state = UNKNOWN;
+        default: next_state = ST_UNKNOWN;
     endcase
 end
 
@@ -62,15 +66,15 @@ always_comb begin
     reset_counter = 1'b0;
 
     case (state)
-        IDLE: begin
-            if (next_state == FLUSH || next_state == LOAD) begin
+        ST_IDLE: begin
+            if (next_state == ST_FLUSH || next_state == ST_LOAD) begin
                 set_new_l2_block_address = 1'b1;
                 reset_counter = 1'b1;
             end
         end
 
-        FLUSH: begin
-            if (next_state == LOAD) begin
+        ST_FLUSH: begin
+            if (next_state == ST_LOAD) begin
                 set_new_l2_block_address = 1'b1;
                 reset_counter = 1'b1;
                 clear_selected_dirty_bit = 1'b1;
@@ -78,8 +82,8 @@ always_comb begin
             end
         end
 
-        LOAD: begin
-            if (next_state == IDLE) begin
+        ST_LOAD: begin
+            if (next_state == ST_IDLE) begin
                 finish_new_line_install = 1'b1;
             end
         end
@@ -99,30 +103,40 @@ always_comb begin
     flush_mode = 1'b0;
     load_mode = 1'b0;
     decrement_counter = 1'b0;
-    l2_access = 1'b0;
+    l2_req_type = LOAD;
+    l2_req_valid = 1'b0;
 
     case (state)
-        IDLE: begin
+        ST_IDLE: begin
 
         end
 
-        LOAD: begin
+        ST_LOAD: begin
             load_mode = 1'b1;
-            decrement_counter = 1'b1;
-            l2_access = 1'b1;
+            l2_req_type = LOAD;
+            l2_req_valid = 1'b1;
+
+            if (l2_fetched_word_valid) begin
+                decrement_counter = 1'b1;
+            end
         end
 
-        FLUSH: begin
+        ST_FLUSH: begin
             flush_mode = 1'b1;
-            decrement_counter = 1'b1;
-            l2_access = 1'b1;
+            l2_req_type = STORE;
+            l2_req_valid = 1'b1;
+
+            if (l2_fetched_word_valid) begin
+                decrement_counter = 1'b1;
+            end
         end
 
         default: begin
             flush_mode = 1'bx;
             load_mode = 1'bx;
             decrement_counter = 1'bx;
-            l2_access = 1'bx;
+            l2_req_type = MO_UNKNOWN;
+            l2_req_valid = 1'bx;
         end
     endcase
 end
@@ -130,7 +144,7 @@ end
 //// STATE REGISTER ////
 always_ff @(posedge clk) begin
     if (reset) begin
-        state <= IDLE;
+        state <= ST_IDLE;
     end else begin
         state <= next_state;
     end

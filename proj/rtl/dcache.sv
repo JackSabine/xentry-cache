@@ -7,16 +7,19 @@ module dcache import xentry_pkg::*; #(
     input wire reset,
 
     input wire [XLEN-1:0] pipe_req_address,
-    input memory_operation_size_e pipe_req_size,
-    input memory_operation_e pipe_req_type,
+    input wire memory_operation_size_e pipe_req_size,
+    input wire memory_operation_e pipe_req_type,
     input wire pipe_req_valid,
-    output wire [XLEN-1:0] pipe_word,
-    output wire pipe_word_valid,
+    input wire [XLEN-1:0] pipe_word_to_store,
+    output wire [XLEN-1:0] pipe_fetched_word,
+    output wire pipe_fetched_word_valid,
 
-    output wire [XLEN-1:0] l2_address,
-    output wire l2_access,
-    input wire [XLEN-1:0] l2_word,
-    input wire l2_word_valid
+    output wire [XLEN-1:0] l2_req_address,
+    output wire memory_operation_e l2_req_type,
+    output wire l2_req_valid,
+    output wire [XLEN-1:0] l2_word_to_store,
+    input wire [XLEN-1:0] l2_fetched_word,
+    input wire l2_fetched_word_valid
 );
 
 ///////////////////////////////////////////////////////////////////
@@ -63,58 +66,8 @@ dcache_datapath #(
     .TAG_SIZE(TAG_SIZE),
     .NUM_SETS(NUM_SETS),
     .XLEN(XLEN)
-) datapath (
-    .clk(clk),
-    .reset(reset),
+) datapath (.*);
 
-    .req_ofs(pipe_req_ofs),
-    .req_set(pipe_req_set),
-    .req_tag(pipe_req_tag),
-    .req_size(pipe_req_size),
-    .req_type(pipe_req_type),
-    .req_valid(pipe_req_valid),
-    .req_data_to_store(),
-    .req_data_to_return(pipe_word),
-
-    .l2_address(l2_address),
-    .data_from_l2(l2_word),
-    .data_to_l2(),
-
-    .flush_mode(flush_mode),
-    .load_mode(load_mode),
-    .clear_selected_dirty_bit(clear_selected_dirty_bit),
-    .clear_selected_valid_bit(clear_selected_valid_bit),
-    .finish_new_line_install(finish_new_line_install),
-    .set_new_l2_block_address(set_new_l2_block_address),
-    .reset_counter(reset_counter),
-    .decrement_counter(decrement_counter),
-    .counter_done(counter_done),
-    .hit(hit),
-    .dirty_miss(dirty_miss),
-    .clean_miss(clean_miss)
-);
-
-dcache_controller controller (
-    .clk(clk),
-    .reset(reset),
-
-    .counter_done(counter_done),
-    .hit(hit),
-    .dirty_miss(dirty_miss),
-    .clean_miss(clean_miss),
-
-    .flush_mode(flush_mode),
-    .load_mode(load_mode),
-    .clear_selected_dirty_bit(clear_selected_dirty_bit),
-    .clear_selected_valid_bit(clear_selected_valid_bit),
-    .finish_new_line_install(finish_new_line_install),
-    .set_new_l2_block_address(set_new_l2_block_address),
-    .reset_counter(reset_counter),
-    .decrement_counter(decrement_counter),
-
-    .l2_access(l2_access)
-);
-
-assign pipe_word_valid = hit;
+dcache_controller controller (.*);
 
 endmodule

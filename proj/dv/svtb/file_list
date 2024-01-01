@@ -1,1 +1,2 @@
+${DV_ROOT}/svtb/compile_opts.svh
 ${DV_ROOT}/svtb/xentry_pkg.sv

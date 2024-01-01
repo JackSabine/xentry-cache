@@ -59,10 +59,29 @@ logic [NUM_SETS-1:0][TAG_SIZE-1:0] tag_array;
 logic [NUM_SETS-1:0][WORDS_PER_LINE-1:0][BYTES_PER_WORD-1:0][7:0] data_lines;
 
 ///////////////////////////////////////////////////////////////////
-//                        Counter logic                          //
+//                   Implementation structures                   //
 ///////////////////////////////////////////////////////////////////
 logic [WORD_SELECT_SIZE-1:0] counter;
 
+wire [WORD_SELECT_SIZE-1:0] pipe_req_word_select, r_word_select, w_word_select;
+wire [BYTE_SELECT_SIZE-1:0] pipe_req_byte_select, w_byte_select;
+memory_operation_size_e op_size;
+memory_operation_e op_type;
+
+logic tag_match;
+
+logic [WORDS_PER_LINE-1:0][BYTES_PER_WORD-1:0][7:0] single_data_line;
+logic [BYTES_PER_WORD-1:0][7:0] line_word;
+
+logic [NUM_SETS-1:0][WORDS_PER_LINE-1:0] w_active;
+logic [BYTES_PER_WORD-1:0][7:0] write_bus;
+logic [BYTES_PER_WORD-1:0][7:0] w_data;
+
+logic [XLEN-OFS_SIZE-1:0] l2_block_address;
+
+///////////////////////////////////////////////////////////////////
+//                        Counter logic                          //
+///////////////////////////////////////////////////////////////////
 assign counter_done = (counter == 'd0);
 
 always_ff @(posedge clk) begin
@@ -76,11 +95,6 @@ end
 ///////////////////////////////////////////////////////////////////
 //                        Steering logic                         //
 ///////////////////////////////////////////////////////////////////
-wire [WORD_SELECT_SIZE-1:0] pipe_req_word_select, r_word_select, w_word_select;
-wire [BYTE_SELECT_SIZE-1:0] pipe_req_byte_select, w_byte_select;
-memory_operation_size_e op_size;
-memory_operation_e op_type;
-
 assign {pipe_req_word_select, pipe_req_byte_select} = pipe_req_ofs;
 assign r_word_select = flush_mode ? counter : pipe_req_word_select;
 assign w_word_select = load_mode ? counter : pipe_req_word_select;
@@ -103,16 +117,21 @@ always_ff @(posedge clk) begin
             valid_array[i_set] <= 1'b0;
         end
     end else begin
-        if (clear_selected_dirty_bit) begin
-            dirty_array[pipe_req_set] <= 1'b0;
-        end
-
-
         if (clear_selected_valid_bit) begin
             valid_array[pipe_req_set] <= 1'b0;
         end else if (finish_new_line_install) begin
             valid_array[pipe_req_set] <= 1'b1;
             tag_array[pipe_req_set] <= pipe_req_tag;
+        end
+
+        for (int i_set = 0; i_set < NUM_SETS; i_set = i_set + 1) begin
+            if (i_set == pipe_req_set && clear_selected_dirty_bit) begin
+                // Clear selected dirty bit with higher priority
+                dirty_array[pipe_req_set] <= 1'b0;
+            end else if (|w_active[i_set] && load_mode == 1'b0) begin
+                // Only set dirty bit if a write active line is high and we aren't loading from L2
+                dirty_array[i_set] <= 1'b1;
+            end
         end
     end
 end
@@ -120,8 +139,6 @@ end
 ///////////////////////////////////////////////////////////////////
 //                       Hit/miss logic                          //
 ///////////////////////////////////////////////////////////////////
-logic tag_match;
-
 always_comb begin
     {hit, clean_miss, dirty_miss} = 3'b000;
 
@@ -144,9 +161,6 @@ end
 ///////////////////////////////////////////////////////////////////
 //                     Cacheline read logic                      //
 ///////////////////////////////////////////////////////////////////
-logic [WORDS_PER_LINE-1:0][BYTES_PER_WORD-1:0][7:0] single_data_line;
-logic [BYTES_PER_WORD-1:0][7:0] line_word;
-
 always_comb begin
     single_data_line = data_lines[pipe_req_set];
     line_word = single_data_line[r_word_select];
@@ -158,10 +172,6 @@ end
 ///////////////////////////////////////////////////////////////////
 //                     Cacheline write logic                     //
 ///////////////////////////////////////////////////////////////////
-logic [NUM_SETS-1:0][WORDS_PER_LINE-1:0] w_active;
-logic [BYTES_PER_WORD-1:0][7:0] write_bus;
-logic [BYTES_PER_WORD-1:0][7:0] w_data;
-
 always_comb begin : write_active_logic
     for (int i_set = 0; i_set < NUM_SETS; i_set = i_set + 1) begin
         for (int i_word = 0; i_word < WORDS_PER_LINE; i_word = i_word + 1) begin
@@ -215,7 +225,6 @@ always_ff @(posedge clk) begin
             for (int i_byte = 0; i_byte < BYTES_PER_WORD; i_byte = i_byte + 1) begin
                 if (w_active[i_set][i_word]) begin
                     data_lines[i_set][i_word][i_byte] <= write_bus[i_byte];
-                    dirty_array[i_set] <= 1'b1;
                 end
             end
         end
@@ -225,8 +234,6 @@ end
 ///////////////////////////////////////////////////////////////////
 //                  Higher cache address logic                   //
 ///////////////////////////////////////////////////////////////////
-logic [XLEN-OFS_SIZE-1:0] l2_block_address;
-
 always_ff @(posedge clk) begin
     if (set_new_l2_block_address) begin
         l2_block_address <= {

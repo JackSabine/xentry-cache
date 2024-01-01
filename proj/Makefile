@@ -55,7 +55,7 @@ sim: co so
 .PHONY: waves
 waves: | work
 	cd $(WORKDIR)
-	xsim -autoloadwcfg --gui $(TB_TOP)_snapshot.wdb
+	xsim -autoloadwcfg --gui $(TB_TOP)_snapshot.wdb &
 
 work:
 	mkdir $(WORKDIR)

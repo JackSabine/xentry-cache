@@ -1,8 +1,13 @@
+// `define DEBUG_PRINT
+
 module dcache_test import xentry_pkg::*; ();
 
 parameter LINE_SIZE = 16;    // 16 Bytes per block
 parameter CACHE_SIZE = 256;  // Bytes
 parameter XLEN = 32;         // bits
+parameter NUM_LOADS = 2048;
+parameter TIMEOUT_NUM_CLOCKS = 100000;
+parameter CLKPER = 5;
 
 /////////////////////////
 // Testbench utilities //
@@ -10,14 +15,14 @@ parameter XLEN = 32;         // bits
 logic clk = 0;
 logic reset = 1;
 
-always #5 clk = ~clk;
+always #CLKPER clk = ~clk;
 
 int timer = 0;
 wire timeout;
 
-always @(posedge clk) timer = timer + 1;
+always @(posedge clk) timer <= timer + 1;
 
-assign timeout = (timer >= 500);
+assign timeout = (timer >= TIMEOUT_NUM_CLOCKS);
 
 /////////////////////////
 // Signals             //
@@ -47,11 +52,12 @@ logic l2_fetched_word_valid;
 ///////////////////////////////////
 // Environment and golden output //
 ///////////////////////////////////
+typedef int unsigned uint32_t;
 
-bit [XLEN-1:0] value;
+uint32_t index;
 
-logic [XLEN-1:0] golden_memory_structure [int];
-logic [XLEN-1:0] recreated_memory_structure [int];
+logic [XLEN-1:0] golden_memory_structure [uint32_t];
+logic [XLEN-1:0] recreated_memory_structure [uint32_t];
 
 dcache #(
     .LINE_SIZE(LINE_SIZE),
@@ -59,13 +65,22 @@ dcache #(
     .XLEN(XLEN)
 ) dut (.*);
 
-always @(l2_req_address, l2_req_valid, l2_req_type) begin
-    if (golden_memory_structure.exists(l2_req_address)) begin
-        l2_fetched_word = golden_memory_structure[l2_req_address];
-    end else begin
-        l2_fetched_word = 32'hx;
-    end
+initial forever begin
+    @(l2_req_address or l2_req_valid or l2_req_type);
     l2_fetched_word_valid = (l2_req_valid & l2_req_type == LOAD);
+
+    if (!$isunknown(l2_req_address) && l2_fetched_word_valid) begin
+        index = uint32_t'(l2_req_address);
+
+        if (golden_memory_structure.exists(index)) begin
+            l2_fetched_word = golden_memory_structure[index];
+        end else begin
+            l2_fetched_word = 32'hABAC_0012;
+        end
+`ifdef DEBUG_PRINT
+        $display("Performing lookup for index %0d/0x%08x, got %08x", index, index, l2_fetched_word);
+`endif
+    end
 end
 
 
@@ -115,17 +130,12 @@ function bit test_if_memories_equal();
         end
     end
 
-    if (fail) begin
-        print_memories();
-    end
-
     return !fail;
 endfunction
 
 initial begin
-    golden_memory_structure[32'hBEEF67_B_A] = std::randomize(value);
-    golden_memory_structure[32'h000188_C_F] = std::randomize(value);
-    golden_memory_structure[32'h000188_0_F] = std::randomize(value);
+    repeat(NUM_LOADS) golden_memory_structure[uint32_t'($urandom() & ~32'h7)] = $urandom();
+    $display("Finished writing to golden_memory_structure");
 
     repeat(5) @(posedge clk);
     reset = 0;
@@ -140,6 +150,8 @@ initial begin
         repeat(5) @(posedge clk);
     end
 
+    print_memories();
+
     if (test_if_memories_equal() == 1'b1) $display("Pass");
     else $display("Fail");
 
@@ -148,7 +160,11 @@ end
 
 initial begin
     @(posedge timeout);
-    $error("Test timed out");
+    $display("#####################################");
+    $display("timeout signal observed, killing test");
+    print_memories();
+
+    $fatal(2, "Test timed out");
 end
 
 endmodule

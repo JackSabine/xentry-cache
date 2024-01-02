@@ -126,7 +126,7 @@ always_comb begin
             l2_req_type = STORE;
             l2_req_valid = 1'b1;
 
-            if (l2_fetched_word_valid) begin
+            if (1'b0) begin // FIXME need ack signal from L2
                 decrement_counter = 1'b1;
             end
         end

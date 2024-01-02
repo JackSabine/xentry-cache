@@ -64,14 +64,15 @@ logic [NUM_SETS-1:0][WORDS_PER_LINE-1:0][BYTES_PER_WORD-1:0][7:0] data_lines;
 logic [WORD_SELECT_SIZE-1:0] counter;
 
 wire [WORD_SELECT_SIZE-1:0] pipe_req_word_select, r_word_select, w_word_select;
-wire [BYTE_SELECT_SIZE-1:0] pipe_req_byte_select, w_byte_select;
+wire [BYTE_SELECT_SIZE-1:0] pipe_req_byte_select, r_byte_select, w_byte_select;
 memory_operation_size_e op_size;
 memory_operation_e op_type;
 
 logic tag_match;
 
 logic [WORDS_PER_LINE-1:0][BYTES_PER_WORD-1:0][7:0] single_data_line;
-logic [BYTES_PER_WORD-1:0][7:0] line_word;
+logic [BYTES_PER_WORD-1:0][7:0] r_data;
+logic [BYTES_PER_WORD-1:0][7:0] read_bus;
 
 logic [NUM_SETS-1:0][WORDS_PER_LINE-1:0] w_active;
 logic [BYTES_PER_WORD-1:0][7:0] write_bus;
@@ -98,6 +99,7 @@ end
 assign {pipe_req_word_select, pipe_req_byte_select} = pipe_req_ofs;
 assign r_word_select = flush_mode ? counter : pipe_req_word_select;
 assign w_word_select = load_mode ? counter : pipe_req_word_select;
+assign r_byte_select = flush_mode ? {BYTE_SELECT_SIZE{1'b0}} : pipe_req_byte_select;
 assign w_byte_select = load_mode ? {BYTE_SELECT_SIZE{1'b0}} : pipe_req_byte_select;
 
 always_comb begin
@@ -163,10 +165,45 @@ end
 ///////////////////////////////////////////////////////////////////
 always_comb begin
     single_data_line = data_lines[pipe_req_set];
-    line_word = single_data_line[r_word_select];
+    read_bus = single_data_line[r_word_select];
 
-    pipe_fetched_word = line_word;
-    l2_word_to_store = line_word;
+    // B0
+    unique casex (1'b1)
+        (op_size == BYTE) & (r_byte_select == 2'b00): r_data[0] = read_bus[0];
+        (op_size == BYTE) & (r_byte_select == 2'b01): r_data[0] = read_bus[1];
+        (op_size == BYTE) & (r_byte_select == 2'b10): r_data[0] = read_bus[2];
+        (op_size == BYTE) & (r_byte_select == 2'b11): r_data[0] = read_bus[3];
+
+        (op_size == HALF) & (r_byte_select == 2'b0?): r_data[0] = read_bus[0];
+        (op_size == HALF) & (r_byte_select == 2'b1?): r_data[0] = read_bus[2];
+
+        (op_size == WORD) & (r_byte_select == 2'b??): r_data[0] = read_bus[0];
+        default:                                      r_data[0] = 8'b0;
+    endcase
+
+    // B1
+    unique casex (1'b1)
+        (op_size == HALF) & (r_byte_select == 2'b0?): r_data[1] = read_bus[1];
+        (op_size == HALF) & (r_byte_select == 2'b1?): r_data[1] = read_bus[3];
+
+        (op_size == WORD) & (r_byte_select == 2'b??): r_data[1] = read_bus[1];
+        default:                                      r_data[1] = 8'b0;
+    endcase
+
+    // B2
+    unique casex (1'b1)
+        (op_size == WORD) & (r_byte_select == 2'b??): r_data[2] = read_bus[2];
+        default:                                      r_data[2] = 8'b0;
+    endcase
+
+    // B3
+    unique casex (1'b1)
+        (op_size == WORD) & (r_byte_select == 2'b??): r_data[3] = read_bus[3];
+        default:                                      r_data[3] = 8'b0;
+    endcase
+
+    pipe_fetched_word = r_data;
+    l2_word_to_store = read_bus;
 end
 
 ///////////////////////////////////////////////////////////////////
@@ -191,7 +228,7 @@ always_comb begin : write_bus_logic
         (op_size == BYTE) & (w_byte_select == 2'b00): write_bus[0] = w_data[0];
         (op_size == HALF) & (w_byte_select == 2'b0?): write_bus[0] = w_data[0];
         (op_size == WORD) & (w_byte_select == 2'b??): write_bus[0] = w_data[0];
-        default:                                      write_bus[0] = line_word[0];
+        default:                                      write_bus[0] = read_bus[0];
     endcase
 
     // B1
@@ -199,7 +236,7 @@ always_comb begin : write_bus_logic
         (op_size == BYTE) & (w_byte_select == 2'b01): write_bus[1] = w_data[0];
         (op_size == HALF) & (w_byte_select == 2'b0?): write_bus[1] = w_data[1];
         (op_size == WORD) & (w_byte_select == 2'b??): write_bus[1] = w_data[1];
-        default:                                      write_bus[1] = line_word[1];
+        default:                                      write_bus[1] = read_bus[1];
     endcase
 
     // B2
@@ -207,7 +244,7 @@ always_comb begin : write_bus_logic
         (op_size == BYTE) & (w_byte_select == 2'b10): write_bus[2] = w_data[0];
         (op_size == HALF) & (w_byte_select == 2'b1?): write_bus[2] = w_data[0];
         (op_size == WORD) & (w_byte_select == 2'b??): write_bus[2] = w_data[2];
-        default:                                      write_bus[2] = line_word[2];
+        default:                                      write_bus[2] = read_bus[2];
     endcase
 
     // B3
@@ -215,7 +252,7 @@ always_comb begin : write_bus_logic
         (op_size == BYTE) & (w_byte_select == 2'b11): write_bus[3] = w_data[0];
         (op_size == HALF) & (w_byte_select == 2'b1?): write_bus[3] = w_data[1];
         (op_size == WORD) & (w_byte_select == 2'b??): write_bus[3] = w_data[3];
-        default:                                      write_bus[3] = line_word[3];
+        default:                                      write_bus[3] = read_bus[3];
     endcase
 end
 

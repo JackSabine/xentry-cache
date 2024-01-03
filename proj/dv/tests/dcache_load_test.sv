@@ -1,6 +1,6 @@
 // `define DEBUG_PRINT
 
-module dcache_test import xentry_pkg::*; ();
+module dcache_load_test import xentry_pkg::*; ();
 
 parameter LINE_SIZE = 16;    // 16 Bytes per block
 parameter CACHE_SIZE = 256;  // Bytes

@@ -74,7 +74,8 @@ logic [WORDS_PER_LINE-1:0][BYTES_PER_WORD-1:0][7:0] single_data_line;
 logic [BYTES_PER_WORD-1:0][7:0] r_data;
 logic [BYTES_PER_WORD-1:0][7:0] read_bus;
 
-logic [NUM_SETS-1:0][WORDS_PER_LINE-1:0] w_active;
+logic [NUM_SETS-1:0][WORDS_PER_LINE-1:0] w_word_active;
+logic [BYTES_PER_WORD-1:0] w_byte_active;
 logic [BYTES_PER_WORD-1:0][7:0] write_bus;
 logic [BYTES_PER_WORD-1:0][7:0] w_data;
 
@@ -130,7 +131,7 @@ always_ff @(posedge clk) begin
             if (i_set == pipe_req_set && clear_selected_dirty_bit) begin
                 // Clear selected dirty bit with higher priority
                 dirty_array[pipe_req_set] <= 1'b0;
-            end else if (|w_active[i_set] && load_mode == 1'b0) begin
+            end else if (|w_word_active[i_set] && load_mode == 1'b0) begin
                 // Only set dirty bit if a write active line is high and we aren't loading from L2
                 dirty_array[i_set] <= 1'b1;
             end
@@ -147,6 +148,7 @@ always_comb begin
     tag_match = tag_array[pipe_req_set] == pipe_req_tag;
 
     if (pipe_req_valid) begin
+        // tag_match and dirty_array[...] are allowed to be x
         casex({valid_array[pipe_req_set], tag_match, dirty_array[pipe_req_set]})
         3'b0??: clean_miss = 1'b1;
         3'b100: clean_miss = 1'b1;
@@ -163,43 +165,23 @@ end
 ///////////////////////////////////////////////////////////////////
 //                     Cacheline read logic                      //
 ///////////////////////////////////////////////////////////////////
+logic [7:0] byte_read;
+logic [15:0] half_read;
+logic [31:0] word_read;
+
 always_comb begin
     single_data_line = data_lines[pipe_req_set];
     read_bus = single_data_line[r_word_select];
 
-    // B0
-    unique casex (1'b1)
-        (op_size == BYTE) & (r_byte_select == 2'b00): r_data[0] = read_bus[0];
-        (op_size == BYTE) & (r_byte_select == 2'b01): r_data[0] = read_bus[1];
-        (op_size == BYTE) & (r_byte_select == 2'b10): r_data[0] = read_bus[2];
-        (op_size == BYTE) & (r_byte_select == 2'b11): r_data[0] = read_bus[3];
+    byte_read = read_bus[r_byte_select];
+    half_read = r_byte_select[1] ? {read_bus[3], read_bus[2]} : {read_bus[1], read_bus[0]};
+    word_read = read_bus;
 
-        (op_size == HALF) & (r_byte_select == 2'b0?): r_data[0] = read_bus[0];
-        (op_size == HALF) & (r_byte_select == 2'b1?): r_data[0] = read_bus[2];
-
-        (op_size == WORD) & (r_byte_select == 2'b??): r_data[0] = read_bus[0];
-        default:                                      r_data[0] = 8'b0;
-    endcase
-
-    // B1
-    unique casex (1'b1)
-        (op_size == HALF) & (r_byte_select == 2'b0?): r_data[1] = read_bus[1];
-        (op_size == HALF) & (r_byte_select == 2'b1?): r_data[1] = read_bus[3];
-
-        (op_size == WORD) & (r_byte_select == 2'b??): r_data[1] = read_bus[1];
-        default:                                      r_data[1] = 8'b0;
-    endcase
-
-    // B2
-    unique casex (1'b1)
-        (op_size == WORD) & (r_byte_select == 2'b??): r_data[2] = read_bus[2];
-        default:                                      r_data[2] = 8'b0;
-    endcase
-
-    // B3
-    unique casex (1'b1)
-        (op_size == WORD) & (r_byte_select == 2'b??): r_data[3] = read_bus[3];
-        default:                                      r_data[3] = 8'b0;
+    case (op_size)
+    BYTE: r_data = {'0, byte_read};
+    HALF: r_data = {'0, half_read};
+    WORD: r_data = {'0, word_read};
+    default: r_data = 'x;
     endcase
 
     pipe_fetched_word = r_data;
@@ -212,47 +194,63 @@ end
 always_comb begin : write_active_logic
     for (int i_set = 0; i_set < NUM_SETS; i_set = i_set + 1) begin
         for (int i_word = 0; i_word < WORDS_PER_LINE; i_word = i_word + 1) begin
-            w_active[i_set][i_word] =
+            w_word_active[i_set][i_word] =
                 (pipe_req_set == i_set) & // This set is selected
                 (w_word_select == i_word) & // This word is selected
                 ((hit & op_type == STORE) | load_mode); // A hit and a store OR just load_mode
         end
     end
+
+    for (int i_byte = 0; i_byte < BYTES_PER_WORD; i_byte++) begin
+        w_byte_active[i_byte] = 1'b0;
+    end
+
+    case (op_size)
+    BYTE: begin
+        w_byte_active[w_byte_select] = 1'b1;
+    end
+
+    HALF: begin
+        if (|w_byte_select[0:0] == 1'b0) begin
+            for (int i_byte = 0; i_byte < 2; i_byte++) begin
+                w_byte_active[w_byte_select + i_byte] = 1'b1;
+            end
+        end
+    end
+
+    WORD: begin
+        if (|w_byte_select[1:0] == 1'b0) begin
+            for (int i_byte = 0; i_byte < BYTES_PER_WORD; i_byte++) begin
+                w_byte_active[i_byte] = 1'b1;
+            end
+        end
+    end
+
+    default: w_byte_active = 'x;
+    endcase
+
 end : write_active_logic
 
 always_comb begin : write_bus_logic
     w_data = load_mode ? l2_fetched_word : pipe_word_to_store;
 
     // B0
-    unique casex (1'b1)
-        (op_size == BYTE) & (w_byte_select == 2'b00): write_bus[0] = w_data[0];
-        (op_size == HALF) & (w_byte_select == 2'b0?): write_bus[0] = w_data[0];
-        (op_size == WORD) & (w_byte_select == 2'b??): write_bus[0] = w_data[0];
-        default:                                      write_bus[0] = read_bus[0];
-    endcase
+    write_bus[0] = w_data[0];
 
     // B1
-    unique casex (1'b1)
-        (op_size == BYTE) & (w_byte_select == 2'b01): write_bus[1] = w_data[0];
-        (op_size == HALF) & (w_byte_select == 2'b0?): write_bus[1] = w_data[1];
-        (op_size == WORD) & (w_byte_select == 2'b??): write_bus[1] = w_data[1];
-        default:                                      write_bus[1] = read_bus[1];
-    endcase
+    if (op_size == BYTE) write_bus[1] = w_data[0];
+    else                 write_bus[1] = w_data[1];
 
     // B2
-    unique casex (1'b1)
-        (op_size == BYTE) & (w_byte_select == 2'b10): write_bus[2] = w_data[0];
-        (op_size == HALF) & (w_byte_select == 2'b1?): write_bus[2] = w_data[0];
-        (op_size == WORD) & (w_byte_select == 2'b??): write_bus[2] = w_data[2];
-        default:                                      write_bus[2] = read_bus[2];
-    endcase
+    if (op_size == WORD) write_bus[2] = w_data[2];
+    else                 write_bus[2] = w_data[0];
 
     // B3
-    unique casex (1'b1)
-        (op_size == BYTE) & (w_byte_select == 2'b11): write_bus[3] = w_data[0];
-        (op_size == HALF) & (w_byte_select == 2'b1?): write_bus[3] = w_data[1];
-        (op_size == WORD) & (w_byte_select == 2'b??): write_bus[3] = w_data[3];
-        default:                                      write_bus[3] = read_bus[3];
+    unique case (op_size)
+    BYTE: write_bus[3] = w_data[0];
+    HALF: write_bus[3] = w_data[1];
+    WORD: write_bus[3] = w_data[3];
+    default: write_bus[3] = 'x;
     endcase
 end
 
@@ -260,7 +258,7 @@ always_ff @(posedge clk) begin
     for (int i_set = 0; i_set < NUM_SETS; i_set = i_set + 1) begin
         for (int i_word = 0; i_word < WORDS_PER_LINE; i_word = i_word + 1) begin
             for (int i_byte = 0; i_byte < BYTES_PER_WORD; i_byte = i_byte + 1) begin
-                if (w_active[i_set][i_word]) begin
+                if (w_word_active[i_set][i_word] & w_byte_active[i_byte]) begin
                     data_lines[i_set][i_word][i_byte] <= write_bus[i_byte];
                 end
             end

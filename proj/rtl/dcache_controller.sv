@@ -36,7 +36,7 @@ dcache_state_e state, next_state;
 //// NEXT STATE LOGIC ////
 always_comb begin
     case (state)
-        ST_IDLE: unique casex (1'b1)
+        ST_IDLE: unique casez (1'b1)
             hit:        next_state = ST_IDLE;
             dirty_miss: next_state = ST_FLUSH;
             clean_miss: next_state = ST_LOAD;

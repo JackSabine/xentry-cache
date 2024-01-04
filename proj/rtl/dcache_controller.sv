@@ -7,7 +7,7 @@ module dcache_controller import xentry_pkg::*; (
     output logic pipe_req_fulfilled,
 
     //// HIGHER MEMORY ////
-    input wire l2_fetched_word_valid,
+    input wire l2_req_fulfilled,
     output memory_operation_e l2_req_type,
     output logic l2_req_valid,
 
@@ -121,7 +121,7 @@ always_comb begin
             l2_req_type = LOAD;
             l2_req_valid = 1'b1;
 
-            if (l2_fetched_word_valid) begin
+            if (l2_req_fulfilled) begin
                 decrement_counter = 1'b1;
             end
         end
@@ -131,7 +131,7 @@ always_comb begin
             l2_req_type = STORE;
             l2_req_valid = 1'b1;
 
-            if (1'b0) begin // FIXME need ack signal from L2
+            if (l2_req_fulfilled) begin
                 decrement_counter = 1'b1;
             end
         end

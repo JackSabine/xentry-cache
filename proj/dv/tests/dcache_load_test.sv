@@ -48,7 +48,7 @@ wire [XLEN-1:0] l2_word_to_store;
 
 //// SIGNALS FROM L2 (TO DCACHE) ////
 logic [XLEN-1:0] l2_fetched_word;
-logic l2_fetched_word_valid;
+logic l2_req_fulfilled;
 
 ///////////////////////////////////
 // Environment and golden output //
@@ -70,9 +70,9 @@ initial begin
 
     forever begin
         @(l2_req_address or l2_req_valid or l2_req_type);
-        l2_fetched_word_valid = (l2_req_valid & l2_req_type == LOAD);
+        l2_req_fulfilled = (l2_req_valid & l2_req_type == LOAD);
 
-        if (!$isunknown(l2_req_address) && l2_fetched_word_valid) begin
+        if (!$isunknown(l2_req_address) && l2_req_fulfilled) begin
             req_index = uint32_t'(l2_req_address);
 
             if (main_memory.exists(req_index)) begin

@@ -19,7 +19,7 @@ module dcache import xentry_pkg::*; #(
     output wire l2_req_valid,
     output wire [XLEN-1:0] l2_word_to_store,
     input wire [XLEN-1:0] l2_fetched_word,
-    input wire l2_fetched_word_valid
+    input wire l2_req_fulfilled
 );
 
 ///////////////////////////////////////////////////////////////////

@@ -38,8 +38,8 @@ module dcache_datapath import xentry_pkg::*; #(
 
     output wire counter_done,
     output logic hit,
-    output logic dirty_miss,
-    output logic clean_miss
+    output logic valid_dirty_bit,
+    output logic miss
 );
 
 ///////////////////////////////////////////////////////////////////
@@ -142,20 +142,19 @@ end
 //                       Hit/miss logic                          //
 ///////////////////////////////////////////////////////////////////
 always_comb begin
-    {hit, clean_miss, dirty_miss} = 3'b000;
+    {hit, miss} = 2'b00;
 
+    valid_dirty_bit = valid_array[pipe_req_set] & dirty_array[pipe_req_set];
     tag_match = tag_array[pipe_req_set] == pipe_req_tag;
 
-    if (pipe_req_valid) begin
-        // tag_match and dirty_array[...] are allowed to be x
-        casex({valid_array[pipe_req_set], tag_match, dirty_array[pipe_req_set]})
-        3'b0??: clean_miss = 1'b1;
-        3'b100: clean_miss = 1'b1;
-        3'b101: dirty_miss = 1'b1;
-        3'b11?: hit = 1'b1;
-        default: {hit, clean_miss, dirty_miss} = 3'bxxx;
-        endcase
-    end
+    // tag_match is allowed to be x
+    casex({pipe_req_valid, valid_array[pipe_req_set], tag_match})
+        3'b0??: begin /* nop */ end
+        3'b10?: miss = 1'b1;
+        3'b110: miss = 1'b1;
+        3'b111: hit = 1'b1;
+        default: {hit, miss} = 2'bxx;
+    endcase
 end
 
 
@@ -269,7 +268,7 @@ end
 always_ff @(posedge clk) begin
     if (set_new_l2_block_address) begin
         l2_block_address <= {
-            dirty_miss ? tag_array[pipe_req_set] : pipe_req_tag,
+            valid_dirty_bit ? tag_array[pipe_req_set] : pipe_req_tag,
             pipe_req_set
         };
     end

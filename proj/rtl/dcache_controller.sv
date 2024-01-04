@@ -14,8 +14,8 @@ module dcache_controller import xentry_pkg::*; (
     //// DATAPATH/CONTROLLER SIGNALS ////
     input wire counter_done,
     input wire hit,
-    input wire dirty_miss,
-    input wire clean_miss,
+    input wire valid_dirty_bit,
+    input wire miss,
 
     output logic flush_mode,
     output logic load_mode,
@@ -39,11 +39,11 @@ dcache_state_e state, next_state;
 //// NEXT STATE LOGIC ////
 always_comb begin
     case (state)
-        ST_IDLE: unique casez (1'b1)
-            hit:        next_state = ST_IDLE;
-            dirty_miss: next_state = ST_FLUSH;
-            clean_miss: next_state = ST_LOAD;
-            default:    next_state = ST_IDLE;
+        ST_IDLE: unique casez ({hit, miss, valid_dirty_bit})
+            3'b1??:  next_state = ST_IDLE;
+            3'b010:  next_state = ST_LOAD;
+            3'b011:  next_state = ST_FLUSH;
+            default: next_state = ST_IDLE;
         endcase
 
         ST_FLUSH: begin

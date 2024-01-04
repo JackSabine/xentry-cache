@@ -56,8 +56,8 @@ wire reset_counter;
 wire decrement_counter;
 wire counter_done;
 wire hit;
-wire dirty_miss;
-wire clean_miss;
+wire valid_dirty_bit;
+wire miss;
 
 dcache_datapath #(
     .LINE_SIZE(LINE_SIZE),

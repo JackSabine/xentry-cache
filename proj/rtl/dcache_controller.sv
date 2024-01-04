@@ -90,6 +90,7 @@ always_comb begin
         ST_LOAD: begin
             if (next_state == ST_IDLE) begin
                 finish_new_line_install = 1'b1;
+                clear_selected_dirty_bit = 1'b1;
             end
         end
 

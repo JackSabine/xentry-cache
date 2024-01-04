@@ -3,6 +3,9 @@ module dcache_controller import xentry_pkg::*; (
     input wire clk,
     input wire reset,
 
+    //// PIPELINE ////
+    output logic pipe_req_fulfilled,
+
     //// HIGHER MEMORY ////
     input wire l2_fetched_word_valid,
     output memory_operation_e l2_req_type,
@@ -70,6 +73,8 @@ always_comb begin
             if (next_state == ST_FLUSH || next_state == ST_LOAD) begin
                 set_new_l2_block_address = 1'b1;
                 reset_counter = 1'b1;
+            end else begin
+                pipe_req_fulfilled = hit;
             end
         end
 

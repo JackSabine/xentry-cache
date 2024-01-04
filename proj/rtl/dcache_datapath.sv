@@ -20,7 +20,6 @@ module dcache_datapath import xentry_pkg::*; #(
     input wire pipe_req_valid,
     input wire [XLEN-1:0] pipe_word_to_store,
     output logic [XLEN-1:0] pipe_fetched_word,
-    output logic pipe_fetched_word_valid,
 
     //// HIGHER MEMORY ////
     output wire [XLEN-1:0] l2_req_address,
@@ -157,8 +156,6 @@ always_comb begin
         default: {hit, clean_miss, dirty_miss} = 3'bxxx;
         endcase
     end
-
-    pipe_fetched_word_valid = hit;
 end
 
 

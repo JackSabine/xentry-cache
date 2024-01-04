@@ -12,7 +12,7 @@ module dcache import xentry_pkg::*; #(
     input wire pipe_req_valid,
     input wire [XLEN-1:0] pipe_word_to_store,
     output wire [XLEN-1:0] pipe_fetched_word,
-    output wire pipe_fetched_word_valid,
+    output wire pipe_req_fulfilled,
 
     output wire [XLEN-1:0] l2_req_address,
     output wire memory_operation_e l2_req_type,

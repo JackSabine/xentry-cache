@@ -38,7 +38,7 @@ logic [XLEN-1:0] pipe_word_to_store;
 
 //// SIGNALS TO PIPELINE (FROM DCACHE) ////
 wire [XLEN-1:0] pipe_fetched_word;
-wire pipe_fetched_word_valid;
+wire pipe_req_fulfilled;
 
 //// SIGNALS TO L2 (FROM DCACHE) ////
 wire [XLEN-1:0] l2_req_address;
@@ -90,7 +90,7 @@ end
 uint32_t expected_value;
 wire match;
 
-assign match = pipe_fetched_word_valid & (pipe_fetched_word == expected_value);
+assign match = pipe_req_fulfilled & (pipe_fetched_word == expected_value);
 
 initial begin
     uint32_t index;
@@ -137,7 +137,7 @@ initial begin
         pipe_req_address = index | byte_offset;
         pipe_req_valid = 1'b1;
 
-        @(posedge pipe_fetched_word_valid);
+        @(posedge pipe_req_fulfilled);
         assert(!$isunknown(|pipe_fetched_word));
 
         @(posedge clk);

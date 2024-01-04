@@ -58,6 +58,9 @@ typedef int unsigned uint32_t;
 logic [XLEN-1:0] main_memory [uint32_t];
 uint32_t passes = 0;
 uint32_t fails = 0;
+uint32_t expected_value;
+wire match;
+event tb_req_fulfilled;
 
 dcache #(
     .LINE_SIZE(LINE_SIZE),
@@ -75,22 +78,26 @@ initial begin
         if (!$isunknown(l2_req_address) && l2_req_fulfilled) begin
             req_index = uint32_t'(l2_req_address);
 
-            if (main_memory.exists(req_index)) begin
-                l2_fetched_word = main_memory[req_index];
-            end else begin
-                l2_fetched_word = 32'hABAC_0012;
-            end
-`ifdef DEBUG_PRINT
-            $display("Performing lookup for req_index %0d/0x%08x, got %08x", req_index, req_index, l2_fetched_word);
-`endif
+            l2_fetched_word = main_memory.exists(req_index) ?
+                main_memory[req_index] :
+                32'hABAC_0012;
         end
     end
 end
 
-uint32_t expected_value;
-wire match;
+function uint32_t generate_expected_value(uint32_t index, bit[1:0] byte_offset);
+    uint32_t mask;
+    unique case (pipe_req_size)
+        BYTE: mask = 32'h0000_00FF;
+        HALF: mask = 32'h0000_FFFF;
+        WORD: mask = 32'hFFFF_FFFF;
+    endcase
+    return (main_memory[index] >> (8 * byte_offset)) & mask;
+endfunction
 
 assign match = pipe_req_fulfilled & (pipe_fetched_word == expected_value);
+
+always @(posedge clk) if (pipe_req_fulfilled) ->tb_req_fulfilled;
 
 initial begin
     uint32_t index;
@@ -111,7 +118,6 @@ initial begin
     repeat(5) @(posedge clk);
 
     repeat(NUM_LOADS) begin
-        @(posedge clk);
         assert(std::randomize(index) with {
             index inside {index_list};
         });
@@ -123,24 +129,13 @@ initial begin
                 byte_offset inside {2'b00, 2'b10};
             }
         });
-`ifdef DEBUG_PRINT
-        $display("%0s - %02b", pipe_req_size.name, byte_offset);
-`endif
 
-        expected_value = main_memory[index] >> (8 * byte_offset);
-        case (pipe_req_size)
-        BYTE: expected_value = expected_value & 32'h0000_00FF;
-        HALF: expected_value = expected_value & 32'h0000_FFFF;
-        WORD: expected_value = expected_value & 32'hFFFF_FFFF;
-        endcase
+        expected_value = generate_expected_value(index, byte_offset);
 
         pipe_req_address = index | byte_offset;
         pipe_req_valid = 1'b1;
 
-        @(posedge pipe_req_fulfilled);
-        assert(!$isunknown(|pipe_fetched_word));
-
-        @(posedge clk);
+        @(tb_req_fulfilled);
         pipe_req_valid = 1'b0;
 
         if (match) begin

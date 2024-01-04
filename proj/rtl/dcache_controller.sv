@@ -36,70 +36,68 @@ typedef enum logic[1:0] {
 
 dcache_state_e state, next_state;
 
-//// NEXT STATE LOGIC ////
+//// NEXT STATE LOGIC AND MEALY OUTPUTS ////
 always_comb begin
+    {
+        clear_selected_dirty_bit,
+        clear_selected_valid_bit,
+        finish_new_line_install,
+        set_new_l2_block_address,
+        reset_counter,
+        pipe_req_fulfilled
+    } = '0;
+
     case (state)
         ST_IDLE: unique casez ({hit, miss, valid_dirty_bit})
-            3'b1??:  next_state = ST_IDLE;
-            3'b010:  next_state = ST_LOAD;
-            3'b011:  next_state = ST_FLUSH;
+            3'b1??: begin
+                next_state = ST_IDLE;
+                pipe_req_fulfilled = 1'b1;
+            end
+            3'b010: begin
+                next_state = ST_LOAD;
+                set_new_l2_block_address = 1'b1;
+                reset_counter = 1'b1;
+            end
+            3'b011: begin
+                next_state = ST_FLUSH;
+                set_new_l2_block_address = 1'b1;
+                reset_counter = 1'b1;
+            end
             default: next_state = ST_IDLE;
         endcase
 
         ST_FLUSH: begin
-            if (counter_done) next_state = ST_LOAD;
-            else              next_state = ST_FLUSH;
-        end
-
-        ST_LOAD: begin
-            if (counter_done) next_state = ST_IDLE;
-            else              next_state = ST_LOAD;
-        end
-
-        default: next_state = ST_UNKNOWN;
-    endcase
-end
-
-//// MEALY OUTPUTS ////
-always_comb begin
-    clear_selected_dirty_bit = 1'b0;
-    clear_selected_valid_bit = 1'b0;
-    finish_new_line_install = 1'b0;
-    set_new_l2_block_address = 1'b0;
-    reset_counter = 1'b0;
-
-    case (state)
-        ST_IDLE: begin
-            if (next_state == ST_FLUSH || next_state == ST_LOAD) begin
-                set_new_l2_block_address = 1'b1;
-                reset_counter = 1'b1;
-            end else begin
-                pipe_req_fulfilled = hit;
-            end
-        end
-
-        ST_FLUSH: begin
-            if (next_state == ST_LOAD) begin
+            if (counter_done) begin
+                next_state = ST_LOAD;
                 set_new_l2_block_address = 1'b1;
                 reset_counter = 1'b1;
                 clear_selected_dirty_bit = 1'b1;
                 clear_selected_valid_bit = 1'b1;
+            end else begin
+                next_state = ST_FLUSH;
             end
         end
 
         ST_LOAD: begin
-            if (next_state == ST_IDLE) begin
+            if (counter_done) begin
+                next_state = ST_IDLE;
                 finish_new_line_install = 1'b1;
                 clear_selected_dirty_bit = 1'b1;
+            end else begin
+                next_state = ST_LOAD;
             end
         end
 
         default: begin
-            clear_selected_dirty_bit = 1'bx;
-            clear_selected_valid_bit = 1'bx;
-            finish_new_line_install = 1'bx;
-            set_new_l2_block_address = 1'bx;
-            reset_counter = 1'bx;
+            next_state = ST_UNKNOWN;
+            {
+                clear_selected_dirty_bit,
+                clear_selected_valid_bit,
+                finish_new_line_install,
+                set_new_l2_block_address,
+                reset_counter,
+                pipe_req_fulfilled
+            } = 'x;
         end
     endcase
 end

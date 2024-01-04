@@ -29,8 +29,8 @@ module dcache_controller import xentry_pkg::*; (
 
 typedef enum logic[1:0] {
     ST_IDLE = 2'b00,
-    ST_LOAD = 2'b11,
-    ST_FLUSH = 2'b10,
+    ST_ALLOCATE = 2'b11,
+    ST_WRITEBACK = 2'b10,
     ST_UNKNOWN = 2'bxx
 } dcache_state_e;
 
@@ -54,37 +54,37 @@ always_comb begin
                 pipe_req_fulfilled = 1'b1;
             end
             3'b010: begin
-                next_state = ST_LOAD;
+                next_state = ST_ALLOCATE;
                 set_new_l2_block_address = 1'b1;
                 reset_counter = 1'b1;
             end
             3'b011: begin
-                next_state = ST_FLUSH;
+                next_state = ST_WRITEBACK;
                 set_new_l2_block_address = 1'b1;
                 reset_counter = 1'b1;
             end
             default: next_state = ST_IDLE;
         endcase
 
-        ST_FLUSH: begin
+        ST_WRITEBACK: begin
             if (counter_done) begin
-                next_state = ST_LOAD;
+                next_state = ST_ALLOCATE;
                 set_new_l2_block_address = 1'b1;
                 reset_counter = 1'b1;
                 clear_selected_dirty_bit = 1'b1;
                 clear_selected_valid_bit = 1'b1;
             end else begin
-                next_state = ST_FLUSH;
+                next_state = ST_WRITEBACK;
             end
         end
 
-        ST_LOAD: begin
+        ST_ALLOCATE: begin
             if (counter_done) begin
                 next_state = ST_IDLE;
                 finish_new_line_install = 1'b1;
                 clear_selected_dirty_bit = 1'b1;
             end else begin
-                next_state = ST_LOAD;
+                next_state = ST_ALLOCATE;
             end
         end
 
@@ -115,7 +115,7 @@ always_comb begin
 
         end
 
-        ST_LOAD: begin
+        ST_ALLOCATE: begin
             load_mode = 1'b1;
             l2_req_type = LOAD;
             l2_req_valid = 1'b1;
@@ -125,7 +125,7 @@ always_comb begin
             end
         end
 
-        ST_FLUSH: begin
+        ST_WRITEBACK: begin
             flush_mode = 1'b1;
             l2_req_type = STORE;
             l2_req_valid = 1'b1;

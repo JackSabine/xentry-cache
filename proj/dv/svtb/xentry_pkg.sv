@@ -5,10 +5,11 @@ package xentry_pkg;
         WORD
     } memory_operation_size_e;
 
-    typedef enum logic {
-        STORE = 1'b0,
-        LOAD = 1'b1,
-        MO_UNKNOWN = 1'bx
+    typedef enum logic [1:0] {
+        STORE = 2'b00,
+        LOAD = 2'b01,
+        CLFLUSH = 2'b11,
+        MO_UNKNOWN = 2'bxx
     } memory_operation_e;
 
 endpackage: xentry_pkg

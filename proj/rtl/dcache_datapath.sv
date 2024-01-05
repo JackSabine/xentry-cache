@@ -39,7 +39,8 @@ module dcache_datapath import xentry_pkg::*; #(
     output wire counter_done,
     output logic hit,
     output logic valid_dirty_bit,
-    output logic miss
+    output logic miss,
+    output logic clflush_requested
 );
 
 ///////////////////////////////////////////////////////////////////
@@ -155,6 +156,8 @@ always_comb begin
         3'b111: hit = 1'b1;
         default: {hit, miss} = 2'bxx;
     endcase
+
+    clflush_requested = pipe_req_valid & (pipe_req_type == CLFLUSH);
 end
 
 

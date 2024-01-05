@@ -58,6 +58,7 @@ wire counter_done;
 wire hit;
 wire valid_dirty_bit;
 wire miss;
+wire clflush_requested;
 
 dcache_datapath #(
     .LINE_SIZE(LINE_SIZE),

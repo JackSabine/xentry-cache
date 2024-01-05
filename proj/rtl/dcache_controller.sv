@@ -16,6 +16,7 @@ module dcache_controller import xentry_pkg::*; (
     input wire hit,
     input wire valid_dirty_bit,
     input wire miss,
+    input wire clflush_requested,
 
     output logic flush_mode,
     output logic load_mode,
@@ -29,6 +30,7 @@ module dcache_controller import xentry_pkg::*; (
 
 typedef enum logic[1:0] {
     ST_IDLE = 2'b00,
+    ST_FLUSH = 2'b01,
     ST_ALLOCATE = 2'b11,
     ST_WRITEBACK = 2'b10,
     ST_UNKNOWN = 2'bxx
@@ -48,23 +50,45 @@ always_comb begin
     } = '0;
 
     case (state)
-        ST_IDLE: unique casez ({hit, miss, valid_dirty_bit})
-            3'b1??: begin
-                next_state = ST_IDLE;
-                pipe_req_fulfilled = 1'b1;
+        ST_IDLE: begin
+            if (clflush_requested) begin
+                unique casez ({hit, miss, valid_dirty_bit})
+                    3'b01?: begin : clflush_block_not_present
+                        next_state = ST_IDLE;
+                        pipe_req_fulfilled = 1'b1;
+                    end
+                    3'b101: begin : clflush_block_present_and_dirty
+                        next_state = ST_FLUSH;
+                        set_new_l2_block_address = 1'b1;
+                        reset_counter = 1'b1;
+                    end
+                    3'b100: begin : clflush_block_present_and_clean
+                        next_state = ST_IDLE;
+                        clear_selected_valid_bit = 1'b1;
+                        pipe_req_fulfilled = 1'b1;
+                    end
+                    default: next_state = ST_IDLE;
+                endcase
+            end else begin
+                unique casez ({hit, miss, valid_dirty_bit})
+                    3'b10?: begin : requested_block_present
+                        next_state = ST_IDLE;
+                        pipe_req_fulfilled = 1'b1;
+                    end
+                    3'b010: begin : clean_miss
+                        next_state = ST_ALLOCATE;
+                        set_new_l2_block_address = 1'b1;
+                        reset_counter = 1'b1;
+                    end
+                    3'b011: begin : dirty_miss
+                        next_state = ST_WRITEBACK;
+                        set_new_l2_block_address = 1'b1;
+                        reset_counter = 1'b1;
+                    end
+                    default: next_state = ST_IDLE;
+                endcase
             end
-            3'b010: begin
-                next_state = ST_ALLOCATE;
-                set_new_l2_block_address = 1'b1;
-                reset_counter = 1'b1;
-            end
-            3'b011: begin
-                next_state = ST_WRITEBACK;
-                set_new_l2_block_address = 1'b1;
-                reset_counter = 1'b1;
-            end
-            default: next_state = ST_IDLE;
-        endcase
+        end
 
         ST_WRITEBACK: begin
             if (counter_done) begin
@@ -85,6 +109,17 @@ always_comb begin
                 clear_selected_dirty_bit = 1'b1;
             end else begin
                 next_state = ST_ALLOCATE;
+            end
+        end
+
+        ST_FLUSH: begin
+            if (counter_done) begin
+                next_state = ST_IDLE;
+                clear_selected_dirty_bit = 1'b1;
+                clear_selected_valid_bit = 1'b1;
+                pipe_req_fulfilled = 1'b1;
+            end else begin
+                next_state = ST_FLUSH;
             end
         end
 
@@ -110,7 +145,7 @@ always_comb begin
     l2_req_type = LOAD;
     l2_req_valid = 1'b0;
 
-    case (state)
+    case (state) inside
         ST_IDLE: begin
 
         end
@@ -125,7 +160,7 @@ always_comb begin
             end
         end
 
-        ST_WRITEBACK: begin
+        ST_FLUSH, ST_WRITEBACK: begin
             flush_mode = 1'b1;
             l2_req_type = STORE;
             l2_req_valid = 1'b1;

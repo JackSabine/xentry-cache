@@ -36,6 +36,8 @@ COMPILE_LIST += -f $(DV_ROOT)/tests/file_list
 
 TB_TOP := dcache_store_test
 
+SEED = 1
+
 # (c)ompile (o)nly
 .PHONY: co
 co: | work
@@ -47,7 +49,7 @@ co: | work
 .PHONY: so
 so: | work
 	cd $(WORKDIR)
-	xsim $(TB_TOP)_snapshot -tclbatch $(PROJECT_ROOT)/xsim_cfg.tcl
+	xsim $(TB_TOP)_snapshot -tclbatch $(PROJECT_ROOT)/xsim_cfg.tcl --sv_seed $(SEED)
 
 .PHONY: sim
 sim: co so

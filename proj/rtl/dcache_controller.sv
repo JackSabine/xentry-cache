@@ -24,6 +24,7 @@ module dcache_controller import xentry_pkg::*; (
     output logic clear_selected_valid_bit,
     output logic finish_new_line_install,
     output logic set_new_l2_block_address,
+    output logic use_dirty_tag_for_l2_block_address,
     output logic reset_counter,
     output logic decrement_counter
 );
@@ -45,6 +46,7 @@ always_comb begin
         clear_selected_valid_bit,
         finish_new_line_install,
         set_new_l2_block_address,
+        use_dirty_tag_for_l2_block_address,
         reset_counter,
         pipe_req_fulfilled
     } = '0;
@@ -59,6 +61,7 @@ always_comb begin
                     end
                     3'b101: begin : clflush_block_present_and_dirty
                         next_state = ST_FLUSH;
+                        use_dirty_tag_for_l2_block_address = 1'b1;
                         set_new_l2_block_address = 1'b1;
                         reset_counter = 1'b1;
                     end
@@ -82,6 +85,7 @@ always_comb begin
                     end
                     3'b011: begin : dirty_miss
                         next_state = ST_WRITEBACK;
+                        use_dirty_tag_for_l2_block_address = 1'b1;
                         set_new_l2_block_address = 1'b1;
                         reset_counter = 1'b1;
                     end
@@ -130,6 +134,7 @@ always_comb begin
                 clear_selected_valid_bit,
                 finish_new_line_install,
                 set_new_l2_block_address,
+                use_dirty_tag_for_l2_block_address,
                 reset_counter,
                 pipe_req_fulfilled
             } = 'x;

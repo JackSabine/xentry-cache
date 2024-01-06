@@ -52,6 +52,7 @@ wire clear_selected_dirty_bit;
 wire clear_selected_valid_bit;
 wire finish_new_line_install;
 wire set_new_l2_block_address;
+wire use_dirty_tag_for_l2_block_address;
 wire reset_counter;
 wire decrement_counter;
 wire counter_done;

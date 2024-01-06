@@ -33,6 +33,7 @@ module dcache_datapath import xentry_pkg::*; #(
     input wire clear_selected_valid_bit,
     input wire finish_new_line_install,
     input wire set_new_l2_block_address,
+    input wire use_dirty_tag_for_l2_block_address,
     input wire reset_counter,
     input wire decrement_counter,
 
@@ -271,7 +272,7 @@ end
 always_ff @(posedge clk) begin
     if (set_new_l2_block_address) begin
         l2_block_address <= {
-            valid_dirty_bit ? tag_array[pipe_req_set] : pipe_req_tag,
+            use_dirty_tag_for_l2_block_address ? tag_array[pipe_req_set] : pipe_req_tag,
             pipe_req_set
         };
     end

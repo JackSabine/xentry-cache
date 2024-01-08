@@ -7,4 +7,6 @@
 `define REG_BITS    (5)
 `define NUM_REGS    (32)
 
+typedef int unsigned uint32_t;
+
 `endif

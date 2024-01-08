@@ -34,7 +34,7 @@ COMPILE_LIST += -f $(DV_ROOT)/svtb/file_list
 COMPILE_LIST += -f $(RTL_ROOT)/file_list
 COMPILE_LIST += -f $(DV_ROOT)/tests/file_list
 
-TB_TOP := dcache_store_test
+TB_TOP := dcache_full_test
 
 SEED = 1
 

@@ -1,3 +1,4 @@
+`include "macros.svh"
 // `define DEBUG_PRINT
 
 module dcache_clflush_test import xentry_pkg::*; ();
@@ -62,8 +63,6 @@ wire l2_req_fulfilled;
 ///////////////////////////////////
 // Environment and golden output //
 ///////////////////////////////////
-typedef int unsigned uint32_t;
-
 logic [XLEN-1:0] main_memory [uint32_t];
 uint32_t expected_value;
 wire match;

@@ -1,3 +1,4 @@
+`include "macros.svh"
 // `define DEBUG_PRINT
 
 module dcache_load_hit_test import xentry_pkg::*; ();
@@ -60,8 +61,6 @@ logic l2_req_fulfilled;
 ///////////////////////////////////
 // Environment and golden output //
 ///////////////////////////////////
-typedef int unsigned uint32_t;
-
 logic [XLEN-1:0] main_memory [uint32_t];
 uint32_t value_matches = 0;
 uint32_t hit_count = 0;

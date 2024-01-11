@@ -2,10 +2,7 @@
 
 module dcache_datapath import xentry_pkg::*; #(
     parameter LINE_SIZE = 32, // 32 Bytes per block
-    parameter OFS_SIZE = 0,
-    parameter SET_SIZE = 0,
-    parameter TAG_SIZE = 0,
-    parameter NUM_SETS = 0,
+    parameter CACHE_SIZE = 1024,
     parameter XLEN = 32
 ) (
     //// TOP LEVEL ////
@@ -13,9 +10,7 @@ module dcache_datapath import xentry_pkg::*; #(
     input wire reset,
 
     //// PIPELINE ////
-    input wire [OFS_SIZE-1:0] pipe_req_ofs,
-    input wire [SET_SIZE-1:0] pipe_req_set,
-    input wire [TAG_SIZE-1:0] pipe_req_tag,
+    input wire [XLEN-1:0] pipe_req_address,
     input wire memory_operation_size_e pipe_req_size,
     input wire [XLEN-1:0] pipe_word_to_store,
     output logic [XLEN-1:0] pipe_fetched_word,
@@ -43,11 +38,27 @@ module dcache_datapath import xentry_pkg::*; #(
     output logic valid_dirty_bit
 );
 
+generate;
+    if ((LINE_SIZE % 4 != 0)  || (CACHE_SIZE % 4 != 0)) $error("LINE_SIZE (", LINE_SIZE, ") and CACHE_SIZE (", CACHE_SIZE, ") MUST BE DIVISIBLE BY 4");
+    if (LINE_SIZE > CACHE_SIZE) $error("LINE_SIZE (", LINE_SIZE, ") MAY NOT EXCEED CACHE_SIZE (", CACHE_SIZE, ")");
+    if (XLEN != `WORD) $error("XLEN VALUES OTHER THAN `WORD (", `WORD, ") ARE NOT SUPPORTED", );
+endgenerate
+
 ///////////////////////////////////////////////////////////////////
 //                        Setup variables                        //
 ///////////////////////////////////////////////////////////////////
-localparam BYTES_PER_WORD = XLEN / 8;
-localparam HALFS_PER_WORD = XLEN / 16;
+localparam NUM_SETS = CACHE_SIZE / (LINE_SIZE);
+
+localparam OFS_SIZE = $clog2(LINE_SIZE),
+           SET_SIZE = $clog2(NUM_SETS),
+           TAG_SIZE = XLEN - (SET_SIZE + OFS_SIZE);
+
+localparam OFS_POS = 0,
+           SET_POS = OFS_POS + OFS_SIZE,
+           TAG_POS = SET_POS + SET_SIZE;
+
+localparam BYTES_PER_WORD = `WORD / `BYTE;
+localparam HALFS_PER_WORD = `WORD / `HALF;
 localparam WORDS_PER_LINE = LINE_SIZE / BYTES_PER_WORD;
 localparam BYTE_SELECT_SIZE = $clog2(BYTES_PER_WORD);
 localparam WORD_SELECT_SIZE = OFS_SIZE - BYTE_SELECT_SIZE;
@@ -57,7 +68,7 @@ localparam WORD_SELECT_SIZE = OFS_SIZE - BYTE_SELECT_SIZE;
 ///////////////////////////////////////////////////////////////////
 logic [NUM_SETS-1:0] valid_array, dirty_array;
 logic [NUM_SETS-1:0][TAG_SIZE-1:0] tag_array;
-logic [NUM_SETS-1:0][WORDS_PER_LINE-1:0][BYTES_PER_WORD-1:0][7:0] data_lines;
+logic [NUM_SETS-1:0][WORDS_PER_LINE-1:0][BYTES_PER_WORD-1:0][`BYTE-1:0] data_lines;
 
 ///////////////////////////////////////////////////////////////////
 //                   Implementation structures                   //
@@ -70,23 +81,35 @@ memory_operation_size_e op_size;
 
 logic tag_match;
 
-logic [7:0] byte_read;
-logic [15:0] half_read;
-logic [31:0] word_read;
+logic [`BYTE-1:0] byte_read;
+logic [`HALF-1:0] half_read;
+logic [`WORD-1:0] word_read;
 
-logic [WORDS_PER_LINE-1:0][BYTES_PER_WORD-1:0][7:0] selected_data_line;
-logic [BYTES_PER_WORD-1:0][7:0] zext_sized_read_data;
+logic [WORDS_PER_LINE-1:0][BYTES_PER_WORD-1:0][`BYTE-1:0] selected_data_line;
+logic [BYTES_PER_WORD-1:0][`BYTE-1:0] zext_sized_read_data;
 
-logic [31:0] byte_write;
-logic [31:0] half_write;
-logic [31:0] word_write;
+logic [`WORD-1:0] byte_write;
+logic [`WORD-1:0] half_write;
+logic [`WORD-1:0] word_write;
 
 logic [NUM_SETS-1:0] w_set_active;
 logic [WORDS_PER_LINE-1:0] w_word_active;
 logic [BYTES_PER_WORD-1:0] w_byte_active;
-logic [BYTES_PER_WORD-1:0][7:0] write_bus;
+logic [BYTES_PER_WORD-1:0][`BYTE-1:0] write_bus;
 
 logic [XLEN-OFS_SIZE-1:0] l2_block_address;
+
+wire [OFS_SIZE-1:0] pipe_req_ofs;
+wire [SET_SIZE-1:0] pipe_req_set;
+wire [TAG_SIZE-1:0] pipe_req_tag;
+
+///////////////////////////////////////////////////////////////////
+//                    Address decomposition                      //
+///////////////////////////////////////////////////////////////////
+
+assign pipe_req_ofs = pipe_req_address[OFS_POS +: OFS_SIZE];
+assign pipe_req_set = pipe_req_address[SET_POS +: SET_SIZE];
+assign pipe_req_tag = pipe_req_address[TAG_POS +: TAG_SIZE];
 
 ///////////////////////////////////////////////////////////////////
 //                        Counter logic                          //

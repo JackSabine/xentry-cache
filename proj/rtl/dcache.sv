@@ -23,27 +23,6 @@ module dcache import xentry_pkg::*; #(
 );
 
 ///////////////////////////////////////////////////////////////////
-//                        Setup variables                        //
-///////////////////////////////////////////////////////////////////
-localparam NUM_SETS = CACHE_SIZE / (LINE_SIZE);
-
-localparam OFS_SIZE = $clog2(LINE_SIZE),
-           SET_SIZE = $clog2(NUM_SETS),
-           TAG_SIZE = XLEN - (SET_SIZE + OFS_SIZE);
-
-localparam OFS_POS = 0,
-           SET_POS = OFS_POS + OFS_SIZE,
-           TAG_POS = SET_POS + SET_SIZE;
-
-wire [OFS_SIZE-1:0] pipe_req_ofs;
-wire [SET_SIZE-1:0] pipe_req_set;
-wire [TAG_SIZE-1:0] pipe_req_tag;
-
-assign pipe_req_ofs = pipe_req_address[OFS_POS +: OFS_SIZE];
-assign pipe_req_set = pipe_req_address[SET_POS +: SET_SIZE];
-assign pipe_req_tag = pipe_req_address[TAG_POS +: TAG_SIZE];
-
-///////////////////////////////////////////////////////////////////
 //                 controller <-> datapath signals               //
 ///////////////////////////////////////////////////////////////////
 wire flush_mode;
@@ -63,10 +42,7 @@ wire valid_dirty_bit;
 
 dcache_datapath #(
     .LINE_SIZE(LINE_SIZE),
-    .OFS_SIZE(OFS_SIZE),
-    .SET_SIZE(SET_SIZE),
-    .TAG_SIZE(TAG_SIZE),
-    .NUM_SETS(NUM_SETS),
+    .CACHE_SIZE(CACHE_SIZE),
     .XLEN(XLEN)
 ) datapath (.*);
 

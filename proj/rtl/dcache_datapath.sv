@@ -1,3 +1,5 @@
+`include "macros.svh"
+
 module dcache_datapath import xentry_pkg::*; #(
     parameter LINE_SIZE = 32, // 32 Bytes per block
     parameter OFS_SIZE = 0,
@@ -5,7 +7,6 @@ module dcache_datapath import xentry_pkg::*; #(
     parameter TAG_SIZE = 0,
     parameter NUM_SETS = 0,
     parameter XLEN = 32
-
 ) (
     //// TOP LEVEL ////
     input wire clk,
@@ -48,6 +49,7 @@ module dcache_datapath import xentry_pkg::*; #(
 //                        Setup variables                        //
 ///////////////////////////////////////////////////////////////////
 localparam BYTES_PER_WORD = XLEN / 8;
+localparam HALFS_PER_WORD = XLEN / 16;
 localparam WORDS_PER_LINE = LINE_SIZE / BYTES_PER_WORD;
 localparam BYTE_SELECT_SIZE = $clog2(BYTES_PER_WORD);
 localparam WORD_SELECT_SIZE = OFS_SIZE - BYTE_SELECT_SIZE;
@@ -64,21 +66,26 @@ logic [NUM_SETS-1:0][WORDS_PER_LINE-1:0][BYTES_PER_WORD-1:0][7:0] data_lines;
 ///////////////////////////////////////////////////////////////////
 logic [WORD_SELECT_SIZE-1:0] counter;
 
-wire [WORD_SELECT_SIZE-1:0] pipe_req_word_select, r_word_select, w_word_select;
-wire [BYTE_SELECT_SIZE-1:0] pipe_req_byte_select, r_byte_select, w_byte_select;
+wire [WORD_SELECT_SIZE-1:0] pipe_req_word_select, word_select;
+wire [BYTE_SELECT_SIZE-1:0] pipe_req_byte_select, byte_select;
 memory_operation_size_e op_size;
-memory_operation_e op_type;
 
 logic tag_match;
 
-logic [WORDS_PER_LINE-1:0][BYTES_PER_WORD-1:0][7:0] single_data_line;
-logic [BYTES_PER_WORD-1:0][7:0] r_data;
-logic [BYTES_PER_WORD-1:0][7:0] read_bus;
+logic [7:0] byte_read;
+logic [15:0] half_read;
+logic [31:0] word_read;
+
+logic [WORDS_PER_LINE-1:0][BYTES_PER_WORD-1:0][7:0] selected_data_line;
+logic [BYTES_PER_WORD-1:0][7:0] zext_sized_read_data;
+
+logic [31:0] byte_write;
+logic [31:0] half_write;
+logic [31:0] word_write;
 
 logic [NUM_SETS-1:0][WORDS_PER_LINE-1:0] w_word_active;
 logic [BYTES_PER_WORD-1:0] w_byte_active;
 logic [BYTES_PER_WORD-1:0][7:0] write_bus;
-logic [BYTES_PER_WORD-1:0][7:0] w_data;
 
 logic [XLEN-OFS_SIZE-1:0] l2_block_address;
 
@@ -99,17 +106,12 @@ end
 //                        Steering logic                         //
 ///////////////////////////////////////////////////////////////////
 assign {pipe_req_word_select, pipe_req_byte_select} = pipe_req_ofs;
-assign r_word_select = flush_mode ? counter : pipe_req_word_select;
-assign w_word_select = load_mode ? counter : pipe_req_word_select;
-assign r_byte_select = flush_mode ? {BYTE_SELECT_SIZE{1'b0}} : pipe_req_byte_select;
-assign w_byte_select = load_mode ? {BYTE_SELECT_SIZE{1'b0}} : pipe_req_byte_select;
+assign word_select = (flush_mode | load_mode) ? counter : pipe_req_word_select;
+assign byte_select = (flush_mode | load_mode) ? '0      : pipe_req_byte_select;
 
 always_comb begin
     if (load_mode || flush_mode) op_size = WORD;
     else                         op_size = pipe_req_size;
-
-    if (pipe_req_valid) op_type = pipe_req_type;
-    else           op_type = LOAD;
 end
 
 ///////////////////////////////////////////////////////////////////
@@ -121,7 +123,7 @@ always_ff @(posedge clk) begin
             valid_array[i_set] <= 1'b0;
         end
     end else begin
-        if (clear_selected_valid_bit) begin
+        unique0 if (clear_selected_valid_bit) begin
             valid_array[pipe_req_set] <= 1'b0;
         end else if (finish_new_line_install) begin
             valid_array[pipe_req_set] <= 1'b1;
@@ -165,92 +167,67 @@ end
 ///////////////////////////////////////////////////////////////////
 //                     Cacheline read logic                      //
 ///////////////////////////////////////////////////////////////////
-logic [7:0] byte_read;
-logic [15:0] half_read;
-logic [31:0] word_read;
-
 always_comb begin
-    single_data_line = data_lines[pipe_req_set];
-    read_bus = single_data_line[r_word_select];
+    selected_data_line = data_lines[pipe_req_set];
+    word_read = selected_data_line[word_select];
 
-    byte_read = read_bus[r_byte_select];
-    half_read = r_byte_select[1] ? {read_bus[3], read_bus[2]} : {read_bus[1], read_bus[0]};
-    word_read = read_bus;
+    byte_read = word_read[byte_select*`BYTE +: `BYTE];
+    half_read = word_read[byte_select[1]*`HALF +: `HALF];
 
     case (op_size)
-    BYTE: r_data = {'0, byte_read};
-    HALF: r_data = {'0, half_read};
-    WORD: r_data = {'0, word_read};
-    default: r_data = 'x;
+    BYTE: zext_sized_read_data = {'0, byte_read};
+    HALF: zext_sized_read_data = {'0, half_read};
+    WORD: zext_sized_read_data = {'0, word_read};
+    default: zext_sized_read_data = 'x;
     endcase
 
-    pipe_fetched_word = r_data;
-    l2_word_to_store = read_bus;
+    pipe_fetched_word = zext_sized_read_data;
+    l2_word_to_store = word_read;
 end
 
 ///////////////////////////////////////////////////////////////////
 //                     Cacheline write logic                     //
 ///////////////////////////////////////////////////////////////////
-always_comb begin : write_active_logic
+always_comb begin : w_word_active_logic
     for (int i_set = 0; i_set < NUM_SETS; i_set = i_set + 1) begin
         for (int i_word = 0; i_word < WORDS_PER_LINE; i_word = i_word + 1) begin
             w_word_active[i_set][i_word] =
                 (pipe_req_set == i_set) & // This set is selected
-                (w_word_select == i_word) & // This word is selected
-                ((hit & op_type == STORE) | load_mode); // A hit and a store OR just load_mode
+                (word_select == i_word) & // This word is selected
+                ((hit & pipe_req_type == STORE) | load_mode); // A hit and a store OR just load_mode
         end
     end
+end
 
-    for (int i_byte = 0; i_byte < BYTES_PER_WORD; i_byte++) begin
-        w_byte_active[i_byte] = 1'b0;
-    end
+always_comb begin : w_byte_active_logic
+    // Init condition
+    w_byte_active = '0;
 
     case (op_size)
-    BYTE: begin
-        w_byte_active[w_byte_select] = 1'b1;
-    end
+        BYTE: w_byte_active[byte_select] = 1'b1;
 
-    HALF: begin
-        if (|w_byte_select[0:0] == 1'b0) begin
-            for (int i_byte = 0; i_byte < 2; i_byte++) begin
-                w_byte_active[w_byte_select + i_byte] = 1'b1;
-            end
-        end
-    end
+        HALF: unique0 casez (byte_select)
+            2'b0?: w_byte_active = 4'b0011;
+            2'b1?: w_byte_active = 4'b1100;
+        endcase
 
-    WORD: begin
-        if (|w_byte_select[1:0] == 1'b0) begin
-            for (int i_byte = 0; i_byte < BYTES_PER_WORD; i_byte++) begin
-                w_byte_active[i_byte] = 1'b1;
-            end
-        end
-    end
+        WORD: w_byte_active = '1;
 
-    default: w_byte_active = 'x;
+        default: w_byte_active = 'x;
     endcase
-
-end : write_active_logic
+end
 
 always_comb begin : write_bus_logic
-    w_data = load_mode ? l2_fetched_word : pipe_word_to_store;
+    word_write = load_mode ? l2_fetched_word : pipe_word_to_store;
 
-    // B0
-    write_bus[0] = w_data[0];
+    byte_write = {BYTES_PER_WORD{word_write[`BYTE-1:0]}};
+    half_write = {HALFS_PER_WORD{word_write[`HALF-1:0]}};
 
-    // B1
-    if (op_size == BYTE) write_bus[1] = w_data[0];
-    else                 write_bus[1] = w_data[1];
-
-    // B2
-    if (op_size == WORD) write_bus[2] = w_data[2];
-    else                 write_bus[2] = w_data[0];
-
-    // B3
-    unique case (op_size)
-    BYTE: write_bus[3] = w_data[0];
-    HALF: write_bus[3] = w_data[1];
-    WORD: write_bus[3] = w_data[3];
-    default: write_bus[3] = 'x;
+    unique casez (op_size)
+        BYTE: write_bus = byte_write;
+        HALF: write_bus = half_write;
+        WORD: write_bus = word_write;
+        default: write_bus = 'x;
     endcase
 end
 

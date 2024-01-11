@@ -83,9 +83,13 @@ logic [31:0] byte_write;
 logic [31:0] half_write;
 logic [31:0] word_write;
 
-logic [NUM_SETS-1:0][WORDS_PER_LINE-1:0] w_word_active;
+logic [NUM_SETS-1:0] w_set_active;
+logic [WORDS_PER_LINE-1:0] w_word_active;
 logic [BYTES_PER_WORD-1:0] w_byte_active;
 logic [BYTES_PER_WORD-1:0][7:0] write_bus;
+
+logic perform_write;
+logic set_selected_dirty_bit;
 
 logic [XLEN-OFS_SIZE-1:0] l2_block_address;
 
@@ -134,7 +138,7 @@ always_ff @(posedge clk) begin
             if (i_set == pipe_req_set && clear_selected_dirty_bit) begin
                 // Clear selected dirty bit with higher priority
                 dirty_array[pipe_req_set] <= 1'b0;
-            end else if (|w_word_active[i_set] && load_mode == 1'b0) begin
+            end else if (i_set == pipe_req_set && set_selected_dirty_bit) begin
                 // Only set dirty bit if a write active line is high and we aren't loading from L2
                 dirty_array[i_set] <= 1'b1;
             end
@@ -188,14 +192,15 @@ end
 ///////////////////////////////////////////////////////////////////
 //                     Cacheline write logic                     //
 ///////////////////////////////////////////////////////////////////
-always_comb begin : w_word_active_logic
+always_comb begin : w_set_active_logic
     for (int i_set = 0; i_set < NUM_SETS; i_set = i_set + 1) begin
-        for (int i_word = 0; i_word < WORDS_PER_LINE; i_word = i_word + 1) begin
-            w_word_active[i_set][i_word] =
-                (pipe_req_set == i_set) & // This set is selected
-                (word_select == i_word) & // This word is selected
-                ((hit & pipe_req_type == STORE) | load_mode); // A hit and a store OR just load_mode
-        end
+        w_set_active[i_set] = pipe_req_set == i_set;
+    end
+end
+
+always_comb begin : w_word_active_logic
+    for (int i_word = 0; i_word < WORDS_PER_LINE; i_word = i_word + 1) begin
+        w_word_active[i_word] = word_select == i_word;
     end
 end
 
@@ -231,11 +236,16 @@ always_comb begin : write_bus_logic
     endcase
 end
 
+always_comb begin : perform_write_logic
+    perform_write = (hit & (pipe_req_type == STORE)) | load_mode;
+    set_selected_dirty_bit = (hit & (pipe_req_type == STORE)) & !load_mode;
+end
+
 always_ff @(posedge clk) begin
     for (int i_set = 0; i_set < NUM_SETS; i_set = i_set + 1) begin
         for (int i_word = 0; i_word < WORDS_PER_LINE; i_word = i_word + 1) begin
             for (int i_byte = 0; i_byte < BYTES_PER_WORD; i_byte = i_byte + 1) begin
-                if (w_word_active[i_set][i_word] & w_byte_active[i_byte]) begin
+                if (perform_write & w_set_active[i_set] & w_word_active[i_word] & w_byte_active[i_byte]) begin
                     data_lines[i_set][i_word][i_byte] <= write_bus[i_byte];
                 end
             end

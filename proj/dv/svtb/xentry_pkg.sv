@@ -12,4 +12,10 @@ package xentry_pkg;
         MO_UNKNOWN = 2'bxx
     } memory_operation_e;
 
+    typedef enum logic {
+        ICACHE_LOAD = 1'b0,
+        ICACHE_CLFLUSH = 1'b1,
+        ICACHE_MO_UNKNOWN = 1'bx
+    } icache_memory_operation_e;
+
 endpackage: xentry_pkg

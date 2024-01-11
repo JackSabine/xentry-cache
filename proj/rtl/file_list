@@ -1,3 +1,6 @@
 ${RTL_ROOT}/dcache_datapath.sv
 ${RTL_ROOT}/dcache_controller.sv
 ${RTL_ROOT}/dcache.sv
+${RTL_ROOT}/icache_datapath.sv
+${RTL_ROOT}/icache_controller.sv
+${RTL_ROOT}/icache.sv

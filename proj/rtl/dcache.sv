@@ -49,6 +49,8 @@ assign pipe_req_tag = pipe_req_address[TAG_POS +: TAG_SIZE];
 wire flush_mode;
 wire load_mode;
 wire clear_selected_dirty_bit;
+wire set_selected_dirty_bit;
+wire perform_write;
 wire clear_selected_valid_bit;
 wire finish_new_line_install;
 wire set_new_l2_block_address;
@@ -56,10 +58,8 @@ wire use_dirty_tag_for_l2_block_address;
 wire reset_counter;
 wire decrement_counter;
 wire counter_done;
-wire hit;
+wire valid_block_match;
 wire valid_dirty_bit;
-wire miss;
-wire clflush_requested;
 
 dcache_datapath #(
     .LINE_SIZE(LINE_SIZE),

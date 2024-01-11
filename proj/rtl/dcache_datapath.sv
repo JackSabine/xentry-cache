@@ -17,8 +17,6 @@ module dcache_datapath import xentry_pkg::*; #(
     input wire [SET_SIZE-1:0] pipe_req_set,
     input wire [TAG_SIZE-1:0] pipe_req_tag,
     input wire memory_operation_size_e pipe_req_size,
-    input wire memory_operation_e pipe_req_type,
-    input wire pipe_req_valid,
     input wire [XLEN-1:0] pipe_word_to_store,
     output logic [XLEN-1:0] pipe_fetched_word,
 
@@ -31,6 +29,8 @@ module dcache_datapath import xentry_pkg::*; #(
     input wire flush_mode,
     input wire load_mode,
     input wire clear_selected_dirty_bit,
+    input wire set_selected_dirty_bit,
+    input wire perform_write,
     input wire clear_selected_valid_bit,
     input wire finish_new_line_install,
     input wire set_new_l2_block_address,
@@ -39,10 +39,8 @@ module dcache_datapath import xentry_pkg::*; #(
     input wire decrement_counter,
 
     output wire counter_done,
-    output logic hit,
-    output logic valid_dirty_bit,
-    output logic miss,
-    output logic clflush_requested
+    output logic valid_block_match,
+    output logic valid_dirty_bit
 );
 
 ///////////////////////////////////////////////////////////////////
@@ -88,9 +86,6 @@ logic [WORDS_PER_LINE-1:0] w_word_active;
 logic [BYTES_PER_WORD-1:0] w_byte_active;
 logic [BYTES_PER_WORD-1:0][7:0] write_bus;
 
-logic perform_write;
-logic set_selected_dirty_bit;
-
 logic [XLEN-OFS_SIZE-1:0] l2_block_address;
 
 ///////////////////////////////////////////////////////////////////
@@ -134,14 +129,10 @@ always_ff @(posedge clk) begin
             tag_array[pipe_req_set] <= pipe_req_tag;
         end
 
-        for (int i_set = 0; i_set < NUM_SETS; i_set = i_set + 1) begin
-            if (i_set == pipe_req_set && clear_selected_dirty_bit) begin
-                // Clear selected dirty bit with higher priority
-                dirty_array[pipe_req_set] <= 1'b0;
-            end else if (i_set == pipe_req_set && set_selected_dirty_bit) begin
-                // Only set dirty bit if a write active line is high and we aren't loading from L2
-                dirty_array[i_set] <= 1'b1;
-            end
+        unique0 if (clear_selected_dirty_bit) begin
+            dirty_array[pipe_req_set] <= 1'b0;
+        end else if (set_selected_dirty_bit) begin
+            dirty_array[pipe_req_set] <= 1'b1;
         end
     end
 end
@@ -150,21 +141,10 @@ end
 //                       Hit/miss logic                          //
 ///////////////////////////////////////////////////////////////////
 always_comb begin
-    {hit, miss} = 2'b00;
-
-    valid_dirty_bit = valid_array[pipe_req_set] & dirty_array[pipe_req_set];
     tag_match = tag_array[pipe_req_set] == pipe_req_tag;
 
-    // tag_match is allowed to be x
-    casex({pipe_req_valid, valid_array[pipe_req_set], tag_match})
-        3'b0??: begin /* nop */ end
-        3'b10?: miss = 1'b1;
-        3'b110: miss = 1'b1;
-        3'b111: hit = 1'b1;
-        default: {hit, miss} = 2'bxx;
-    endcase
-
-    clflush_requested = pipe_req_valid & (pipe_req_type == CLFLUSH);
+    valid_dirty_bit = valid_array[pipe_req_set] & dirty_array[pipe_req_set];
+    valid_block_match = valid_array[pipe_req_set] & tag_match;
 end
 
 
@@ -234,11 +214,6 @@ always_comb begin : write_bus_logic
         WORD: write_bus = word_write;
         default: write_bus = 'x;
     endcase
-end
-
-always_comb begin : perform_write_logic
-    perform_write = (hit & (pipe_req_type == STORE)) | load_mode;
-    set_selected_dirty_bit = (hit & (pipe_req_type == STORE)) & !load_mode;
 end
 
 always_ff @(posedge clk) begin

@@ -137,7 +137,7 @@ assign timeout = (timer >= TIMEOUT_NUM_CLOCKS);
 /////////////////////////
 
 //// SIGNALS FROM PIPELINE (TO DCACHE) ////
-logic [XLEN-1:0] pipe_req_address;
+logic [XLEN-1:0] pipe_req_address = '0;
 memory_operation_size_e pipe_req_size;
 memory_operation_e pipe_req_type;
 logic pipe_req_valid = 1'b0;

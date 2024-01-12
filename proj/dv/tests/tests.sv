@@ -3,3 +3,4 @@
 `include "dcache_clflush_test.sv"
 `include "dcache_store_test.sv"
 `include "dcache_full_test.sv"
+`include "icache_full_test.sv"

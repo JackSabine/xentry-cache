@@ -5,3 +5,4 @@ ${RTL_ROOT}/dcache.sv
 ${RTL_ROOT}/icache_datapath.sv
 ${RTL_ROOT}/icache_controller.sv
 ${RTL_ROOT}/icache.sv
+${RTL_ROOT}/l1_to_l2_cache_req_arbiter.sv

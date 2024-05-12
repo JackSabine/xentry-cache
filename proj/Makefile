@@ -26,10 +26,11 @@ UVM_HOME    := $(HOME)/Documents/uvm-1.2/
 
 UVM_XVLOG_FLAGS := -L uvm
 UVM_XELAB_FLAGS := -L uvm
-UVM_XSIM_FLAGS  := -testplusarg UVM_TESTNAME=$(t) -testplusarg UVM_VERBOSITY=UVM_HIGH
+UVM_XSIM_FLAGS  := -testplusarg UVM_TESTNAME=$(t) -testplusarg UVM_VERBOSITY=UVM_DEBUG
 
 WORKDIR := $(PROJECT_ROOT)/work
 XVLOG_FLAGS := --sv --incr --include $(DV_ROOT)/svtb --include $(DV_ROOT)/tests
+XELAB_FLAGS := --timescale=1ns/1ps --override_timeprecision
 
 COMPILE_LIST += -f $(DV_ROOT)/svtb/file_list
 COMPILE_LIST += -f $(RTL_ROOT)/file_list
@@ -44,7 +45,7 @@ SEED = 1
 co: | work
 	cd $(WORKDIR)
 	xvlog $(UVM_XVLOG_FLAGS) $(COMPILE_LIST) $(XVLOG_FLAGS)
-	xelab -top $(TB_TOP) -snapshot $(TB_TOP)_snapshot -debug all $(UVM_XELAB_FLAGS)
+	xelab -top $(TB_TOP) -snapshot $(TB_TOP)_snapshot -debug all $(UVM_XELAB_FLAGS) $(XELAB_FLAGS)
 
 # (s)im (o)nly
 .PHONY: so

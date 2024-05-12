@@ -14,6 +14,8 @@ class memory_scoreboard extends uvm_scoreboard;
         super.build_phase(phase);
         aport_drv = new("aport_drv", this);
         aport_mon = new("aport_mon", this);
+        expfifo   = new("expfifo", this);
+        outfifo   = new("outfifo", this);
     endfunction
 
     function new (string name, uvm_component parent);

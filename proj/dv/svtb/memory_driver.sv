@@ -17,6 +17,7 @@ class memory_driver extends uvm_driver #(memory_transaction);
             .field_name("memory_requester_if"),
             .value(req_vi)
         ));
+        mem_ap = new(.name("mem_ap"), .parent(this));
     endfunction
 
     task run_phase(uvm_phase phase);
@@ -28,6 +29,15 @@ class memory_driver extends uvm_driver #(memory_transaction);
             req_vi.req_valid <= 1'b0;
 
             @(posedge req_vi.clk);
+            `uvm_info(
+                "memory_driver",
+                $sformatf(
+                    "Driving txn: %s",
+                    mem_tx.convert2string()
+                ),
+                UVM_MEDIUM
+            )
+            req_vi.req_valid     <= 1'b1;
             req_vi.address       <= mem_tx.address;
             req_vi.op            <= mem_tx.op;
             req_vi.size          <= mem_tx.size;

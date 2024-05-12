@@ -1,4 +1,4 @@
-module l1_to_l2_cache_req_arbiter import xentry_pkg::*; #(
+module l1_to_l2_cache_req_arbiter import xentry_types::*; #(
     parameter XLEN = 32
 ) (
     input wire clk,

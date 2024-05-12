@@ -1,11 +1,11 @@
-module icache_controller import xentry_pkg::*; (
+module icache_controller import xentry_types::*; (
     //// TOP LEVEL ////
     input wire clk,
     input wire reset,
 
     //// PIPELINE ////
     input wire pipe_req_valid,
-    input wire icache_memory_operation_e pipe_req_type,
+    input wire memory_operation_e pipe_req_type,
     output logic pipe_req_fulfilled,
 
     //// HIGHER MEMORY ////
@@ -52,7 +52,7 @@ always_comb begin
     case (state)
         ST_IDLE: begin
             if (pipe_req_valid) begin
-                if (pipe_req_type == ICACHE_CLFLUSH) begin
+                if (pipe_req_type == CLFLUSH) begin
                     unique casez ({valid_block_match})
                         1'b0: begin : clflush_block_not_present
                             next_state = ST_IDLE;
@@ -74,6 +74,8 @@ always_comb begin
                         1'b1: begin : hit
                             next_state = ST_IDLE;
                             pipe_req_fulfilled = 1'b1;
+                            // STOREs are treated as if they were LOADs
+                            // No dirty bits are set
                         end
                     endcase
                 end

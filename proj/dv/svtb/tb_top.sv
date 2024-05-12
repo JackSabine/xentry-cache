@@ -31,7 +31,7 @@ module tb_top;
     initial begin
         uvm_config_db #(virtual memory_if)::set(
             .cntxt(null),
-            .inst_name(""),
+            .inst_name("uvm_test_top.*"),
             .field_name("memory_requester_if"),
             .value(req_if)
         );

@@ -17,6 +17,7 @@ class memory_monitor extends uvm_monitor;
             .field_name("memory_requester_if"),
             .value(req_vi)
         ));
+        mem_ap = new(.name("mem_ap"), .parent(this));
     endfunction
 
     task run_phase(uvm_phase phase);
@@ -33,9 +34,19 @@ class memory_monitor extends uvm_monitor;
                 mem_tx.size          = memory_operation_size_e'(req_vi.size);
                 mem_tx.data_to_write = req_vi.word_to_store;
 
+                `uvm_info("memory_monitor", "req_valid seen, awaiting req_fulfilled", UVM_MEDIUM)
+
                 @(posedge req_vi.req_fulfilled);
                 mem_tx.data_read     = req_vi.fetched_word;
 
+                `uvm_info(
+                    "memory_monitor",
+                    $sformatf(
+                        "Observed txn: %s",
+                        mem_tx.convert2string()
+                    ),
+                    UVM_MEDIUM
+                )
                 mem_ap.write(mem_tx);
             end
         end

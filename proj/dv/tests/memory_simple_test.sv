@@ -7,6 +7,11 @@ class memory_simple_test extends uvm_test;
         super.new(name, parent);
     endfunction
 
+    function void start_of_simulation_phase(uvm_phase phase);
+        super.start_of_simulation_phase(phase);
+        uvm_root::get().set_timeout(10000ns, 1);
+    endfunction : start_of_simulation_phase
+
     function void build_phase(uvm_phase phase);
         super.build_phase(phase);
         mem_env = memory_env::type_id::create(.name("mem_env"), .parent(this));

@@ -1,4 +1,4 @@
-module icache import xentry_pkg::*; #(
+module icache import xentry_types::*; #(
     parameter LINE_SIZE = 32, // 32 Bytes per block
     parameter CACHE_SIZE = 1024, // Bytes
     parameter XLEN = 32 // bits
@@ -7,7 +7,7 @@ module icache import xentry_pkg::*; #(
     input wire reset,
 
     input wire [XLEN-1:0] pipe_req_address,
-    input wire icache_memory_operation_e pipe_req_type,
+    input wire memory_operation_e pipe_req_type,
     input wire pipe_req_valid,
     output wire [XLEN-1:0] pipe_fetched_word,
     output wire pipe_req_fulfilled,

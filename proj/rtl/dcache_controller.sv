@@ -1,4 +1,4 @@
-module dcache_controller import xentry_pkg::*; (
+module dcache_controller import xentry_types::*; (
     //// TOP LEVEL ////
     input wire clk,
     input wire reset,

@@ -1,21 +1,17 @@
+`include "uvm_macros.svh"
+
 package xentry_pkg;
-    typedef enum logic[1:0] {
-        BYTE = 2'b00,
-        HALF,
-        WORD
-    } memory_operation_size_e;
+    import uvm_pkg::*;
+    import xentry_types::*;
 
-    typedef enum logic [1:0] {
-        STORE = 2'b00,
-        LOAD = 2'b01,
-        CLFLUSH = 2'b11,
-        MO_UNKNOWN = 2'bxx
-    } memory_operation_e;
+    `include "memory_transaction.sv"
+    `include "memory_transaction_sequences.sv"
+    `include "memory_sequencer.sv"
+    `include "memory_driver.sv"
+    `include "memory_monitor.sv"
+    `include "memory_agent.sv"
+    `include "memory_scoreboard.sv"
+    `include "memory_environment.sv"
 
-    typedef enum logic {
-        ICACHE_LOAD = 1'b0,
-        ICACHE_CLFLUSH = 1'b1,
-        ICACHE_MO_UNKNOWN = 1'bx
-    } icache_memory_operation_e;
-
+    `include "tests.sv"
 endpackage: xentry_pkg

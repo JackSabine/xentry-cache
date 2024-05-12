@@ -22,19 +22,20 @@ ifndef PROJECT_ROOT
   $(error You must define the project root by sourcing project.sh)
 endif
 
-# UVM_HOME    := $(HOME)/Documents/1800.2-2020-1.1
+UVM_HOME    := $(HOME)/Documents/uvm-1.2/
 
-# UVM_COMPILE_OPTIONS     := +incdir+$(UVM_HOME)/src -l $(WORK_DIR)/uvm_1_1 $(UVM_HOME)/src/uvm_pkg.sv
-# UVM_SIMULATION_OPTIONS  := +UVM_VERBOSITY=UVM_HIGH +UVM_TESTNAME=$(t)
+UVM_XVLOG_FLAGS := -L uvm
+UVM_XELAB_FLAGS := -L uvm
+UVM_XSIM_FLAGS  := -testplusarg UVM_TESTNAME=$(t) -testplusarg UVM_VERBOSITY=UVM_HIGH
 
 WORKDIR := $(PROJECT_ROOT)/work
 XVLOG_FLAGS := --sv --incr --include $(DV_ROOT)/svtb --include $(DV_ROOT)/tests
 
 COMPILE_LIST += -f $(DV_ROOT)/svtb/file_list
 COMPILE_LIST += -f $(RTL_ROOT)/file_list
-COMPILE_LIST += -f $(DV_ROOT)/tests/file_list
+# COMPILE_LIST += -f $(DV_ROOT)/tests/file_list
 
-TB_TOP := icache_full_test
+TB_TOP := tb_top
 
 SEED = 1
 
@@ -42,14 +43,14 @@ SEED = 1
 .PHONY: co
 co: | work
 	cd $(WORKDIR)
-	xvlog $(COMPILE_LIST) $(XVLOG_FLAGS)
-	xelab -top $(TB_TOP) -snapshot $(TB_TOP)_snapshot -debug all
+	xvlog $(UVM_XVLOG_FLAGS) $(COMPILE_LIST) $(XVLOG_FLAGS)
+	xelab -top $(TB_TOP) -snapshot $(TB_TOP)_snapshot -debug all $(UVM_XELAB_FLAGS)
 
 # (s)im (o)nly
 .PHONY: so
 so: | work
 	cd $(WORKDIR)
-	xsim $(TB_TOP)_snapshot -tclbatch $(PROJECT_ROOT)/xsim_cfg.tcl --sv_seed $(SEED)
+	xsim $(TB_TOP)_snapshot -tclbatch $(PROJECT_ROOT)/xsim_cfg.tcl --sv_seed $(SEED) $(UVM_XSIM_FLAGS)
 
 .PHONY: sim
 sim: co so
@@ -65,11 +66,3 @@ work:
 .PHONY: clean
 clean:
 	rm -rf $(WORKDIR)
-
-
-# compile_UVM: env
-#   @vlog $(UVM_COMPILE_OPTIONS) $(COMPILE_LIST) -source
-
-# simc_UVM:
-#   @echo "TEST is $(t)"
-#   vsim $(UVM_SIMULATION_OPTIONS) $(TOP_MODULE)

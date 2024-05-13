@@ -3,7 +3,7 @@ class memory_monitor extends uvm_monitor;
 
     uvm_analysis_port #(memory_transaction) mem_ap;
 
-    virtual memory_if req_vi;
+    virtual cache_if req_vi;
 
     function new(string name, uvm_component parent);
         super.new(name, parent);
@@ -11,7 +11,7 @@ class memory_monitor extends uvm_monitor;
 
     function void build_phase(uvm_phase phase);
         super.build_phase(phase);
-        assert(uvm_config_db #(virtual memory_if)::get(
+        assert(uvm_config_db #(virtual cache_if)::get(
             .cntxt(this),
             .inst_name(""),
             .field_name("memory_requester_if"),
@@ -29,15 +29,15 @@ class memory_monitor extends uvm_monitor;
             if (req_vi.req_valid) begin
                 mem_tx = memory_transaction::type_id::create(.name("mem_tx"), .contxt(get_full_name()));
 
-                mem_tx.address       = req_vi.address;
-                mem_tx.op            = memory_operation_e'(req_vi.op);
-                mem_tx.size          = memory_operation_size_e'(req_vi.size);
-                mem_tx.data_to_write = req_vi.word_to_store;
+                mem_tx.req_address    = req_vi.req_address;
+                mem_tx.req_operation  = memory_operation_e'(req_vi.req_operation);
+                mem_tx.req_size       = memory_operation_size_e'(req_vi.req_size);
+                mem_tx.req_store_word = req_vi.req_store_word;
 
                 `uvm_info("memory_monitor", "req_valid seen, awaiting req_fulfilled", UVM_MEDIUM)
 
                 @(posedge req_vi.req_fulfilled);
-                mem_tx.data_read     = req_vi.fetched_word;
+                mem_tx.req_loaded_word = req_vi.req_loaded_word;
 
                 `uvm_info(
                     "memory_monitor",

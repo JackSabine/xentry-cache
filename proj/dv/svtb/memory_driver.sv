@@ -3,7 +3,7 @@ class memory_driver extends uvm_driver #(memory_transaction);
 
     uvm_analysis_port #(memory_transaction) mem_ap;
 
-    virtual memory_if req_vi;
+    virtual cache_if req_vi;
 
     function new(string name, uvm_component parent);
         super.new(name, parent);
@@ -11,7 +11,7 @@ class memory_driver extends uvm_driver #(memory_transaction);
 
     function void build_phase(uvm_phase phase);
         super.build_phase(phase);
-        assert(uvm_config_db #(virtual memory_if)::get(
+        assert(uvm_config_db #(virtual cache_if)::get(
             .cntxt(this),
             .inst_name(""),
             .field_name("memory_requester_if"),
@@ -23,10 +23,12 @@ class memory_driver extends uvm_driver #(memory_transaction);
     task run_phase(uvm_phase phase);
         memory_transaction mem_tx;
 
+        #200;
+
         forever begin
             @(posedge req_vi.clk);
-            seq_item_port.get_next_item(mem_tx);
             req_vi.req_valid <= 1'b0;
+            seq_item_port.get_next_item(mem_tx);
 
             @(posedge req_vi.clk);
             `uvm_info(
@@ -37,15 +39,17 @@ class memory_driver extends uvm_driver #(memory_transaction);
                 ),
                 UVM_MEDIUM
             )
-            req_vi.req_valid     <= 1'b1;
-            req_vi.address       <= mem_tx.address;
-            req_vi.op            <= mem_tx.op;
-            req_vi.size          <= mem_tx.size;
-            req_vi.word_to_store <= mem_tx.data_to_write;
+            req_vi.req_valid      <= 1'b1;
+            req_vi.req_address    <= mem_tx.req_address;
+            req_vi.req_operation  <= mem_tx.req_operation;
+            req_vi.req_size       <= mem_tx.req_size;
+            req_vi.req_store_word <= mem_tx.req_store_word;
             seq_item_port.item_done();
             mem_ap.write(mem_tx);
 
-            @(posedge req_vi.req_fulfilled);
+            while (!req_vi.req_fulfilled) begin
+                @(posedge req_vi.clk);
+            end
         end
    endtask
 endclass

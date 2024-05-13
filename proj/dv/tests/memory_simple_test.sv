@@ -9,8 +9,8 @@ class memory_simple_test extends uvm_test;
 
     function void start_of_simulation_phase(uvm_phase phase);
         super.start_of_simulation_phase(phase);
-        uvm_root::get().set_timeout(10000ns, 1);
-    endfunction : start_of_simulation_phase
+        uvm_root::get().set_timeout(1000ns, 1);
+    endfunction
 
     function void build_phase(uvm_phase phase);
         super.build_phase(phase);
@@ -20,12 +20,17 @@ class memory_simple_test extends uvm_test;
 
     task main_phase(uvm_phase phase);
         repeated_memory_transaction_sequence mem_seq;
+        higher_memory_response_seq hmem_rsp_seq;
 
         mem_seq = repeated_memory_transaction_sequence::type_id::create(.name("mem_seq"));
+        hmem_rsp_seq = higher_memory_response_seq::type_id::create(.name("hmem_rsp_seq"));
         assert(mem_seq.randomize());
         `uvm_info("mem_seq", mem_seq.convert2string(), UVM_NONE)
         mem_seq.set_starting_phase(phase);
         mem_seq.set_automatic_phase_objection(.value(1));
-        mem_seq.start(mem_env.mem_agent.mem_seqr);
+        fork
+            mem_seq.start(mem_env.mem_agent.mem_seqr);
+            hmem_rsp_seq.start(mem_env.hmem_agent.hmem_seqr);
+        join
     endtask
 endclass

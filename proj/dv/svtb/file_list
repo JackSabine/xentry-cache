@@ -1,4 +1,4 @@
 ${DV_ROOT}/svtb/xentry_types.sv
-${DV_ROOT}/svtb/memory_if.sv
+${DV_ROOT}/svtb/interfaces.sv
 ${DV_ROOT}/svtb/xentry_pkg.sv
 ${DV_ROOT}/svtb/tb_top.sv

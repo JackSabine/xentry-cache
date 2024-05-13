@@ -10,8 +10,13 @@ package xentry_pkg;
     `include "memory_driver.sv"
     `include "memory_monitor.sv"
     `include "memory_agent.sv"
+    `include "higher_memory_sequencer.sv"
+    `include "higher_memory_driver.sv"
+    `include "higher_memory_monitor.sv"
+    `include "higher_memory_agent.sv"
+
     `include "memory_scoreboard.sv"
     `include "memory_environment.sv"
 
     `include "tests.sv"
-endpackage: xentry_pkg
+endpackage

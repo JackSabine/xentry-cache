@@ -59,6 +59,9 @@ sim: co so
 
 .PHONY: waves
 waves: | work
+	if [ -f $(TB_TOP)_snapshot.wcfg ]; then
+		cp $(TB_TOP)_snapshot.wcfg $(WORKDIR)
+	fi
 	cd $(WORKDIR)
 	xsim -autoloadwcfg --gui $(TB_TOP)_snapshot.wdb &
 

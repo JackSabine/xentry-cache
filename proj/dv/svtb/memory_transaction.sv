@@ -45,3 +45,15 @@ class read_only_memory_transaction extends memory_transaction;
         super.new(name);
     endfunction
 endclass
+
+class icache_memory_transaction extends read_only_memory_transaction;
+    `uvm_object_utils(icache_memory_transaction)
+
+    constraint word_only_con {
+        req_size == WORD;
+    }
+
+    function new(string name = "");
+        super.new(name);
+    endfunction
+endclass

@@ -1,5 +1,5 @@
-class memory_simple_test extends uvm_test;
-    `uvm_component_utils(memory_simple_test)
+class icache_basic_test extends uvm_test;
+    `uvm_component_utils(icache_basic_test)
 
     memory_env mem_env;
 
@@ -15,7 +15,7 @@ class memory_simple_test extends uvm_test;
     function void build_phase(uvm_phase phase);
         super.build_phase(phase);
         mem_env = memory_env::type_id::create(.name("mem_env"), .parent(this));
-        memory_transaction::type_id::set_type_override(read_only_memory_transaction::get_type());
+        memory_transaction::type_id::set_type_override(icache_memory_transaction::get_type());
     endfunction
 
     task main_phase(uvm_phase phase);

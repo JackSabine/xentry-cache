@@ -1,1 +1,1 @@
-`include "memory_simple_test.sv"
+`include "icache_basic_test.sv"

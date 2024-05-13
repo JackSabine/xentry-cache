@@ -38,7 +38,8 @@ COMPILE_LIST += -f $(RTL_ROOT)/file_list
 
 TB_TOP := tb_top
 
-SEED = 1
+RANDOM_NUMBER = $(shell shuf -i 0-4294967296 -n 1)
+s = $(RANDOM_NUMBER)
 
 # (c)ompile (o)nly
 .PHONY: co
@@ -51,7 +52,7 @@ co: | work
 .PHONY: so
 so: | work
 	cd $(WORKDIR)
-	xsim $(TB_TOP)_snapshot -tclbatch $(PROJECT_ROOT)/xsim_cfg.tcl --sv_seed $(SEED) $(UVM_XSIM_FLAGS)
+	xsim $(TB_TOP)_snapshot -tclbatch $(PROJECT_ROOT)/xsim_cfg.tcl --sv_seed $(s) $(UVM_XSIM_FLAGS)
 
 .PHONY: sim
 sim: co so
@@ -67,3 +68,12 @@ work:
 .PHONY: clean
 clean:
 	rm -rf $(WORKDIR)
+
+.PHONY: help
+help:
+	@echo "#### RULES ####"
+	@echo "* co - compile only (xvlog and xelab)"
+	@echo "* so - sim only (xsim)"
+	@echo "  * s=<seed_override>"
+	@echo "  * t=<test_name>"
+	@echo "* waves - show most recent simulation in waveform"

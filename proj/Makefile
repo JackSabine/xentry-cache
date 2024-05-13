@@ -26,7 +26,7 @@ UVM_HOME    := $(HOME)/Documents/uvm-1.2/
 
 UVM_XVLOG_FLAGS := -L uvm
 UVM_XELAB_FLAGS := -L uvm
-UVM_XSIM_FLAGS  := -testplusarg UVM_TESTNAME=$(t) -testplusarg UVM_VERBOSITY=UVM_DEBUG
+UVM_XSIM_FLAGS  := -testplusarg UVM_TESTNAME=$(t) -testplusarg UVM_VERBOSITY=UVM_LOW
 
 WORKDIR := $(PROJECT_ROOT)/work
 XVLOG_FLAGS := --sv --incr --include $(DV_ROOT)/svtb --include $(DV_ROOT)/tests

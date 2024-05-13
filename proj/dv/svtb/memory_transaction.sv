@@ -28,9 +28,9 @@ class memory_transaction extends uvm_sequence_item;
     `uvm_object_utils_begin(memory_transaction)
         `uvm_field_enum(memory_operation_size_e, req_size,      UVM_ALL_ON)
         `uvm_field_enum(memory_operation_e,      req_operation, UVM_ALL_ON)
-        `uvm_field_int(req_address,     UVM_ALL_ON | UVM_UNSIGNED)
-        `uvm_field_int(req_store_word,  UVM_ALL_ON | UVM_UNSIGNED | UVM_NOCOMPARE)
-        `uvm_field_int(req_loaded_word, UVM_ALL_ON | UVM_UNSIGNED)
+        `uvm_field_int(req_address,     UVM_ALL_ON | UVM_HEX)
+        `uvm_field_int(req_store_word,  UVM_ALL_ON | UVM_HEX)
+        `uvm_field_int(req_loaded_word, UVM_ALL_ON | UVM_HEX)
     `uvm_object_utils_end
 endclass
 

@@ -26,6 +26,7 @@ class icache_basic_test extends uvm_test;
         hmem_rsp_seq = higher_memory_response_seq::type_id::create(.name("hmem_rsp_seq"));
         assert(mem_seq.randomize());
         `uvm_info("mem_seq", mem_seq.convert2string(), UVM_NONE)
+        mem_seq.print();
         mem_seq.set_starting_phase(phase);
         mem_seq.set_automatic_phase_objection(.value(1));
         fork

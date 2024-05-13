@@ -3,6 +3,7 @@ class repeated_memory_transaction_seq extends uvm_sequence #(memory_transaction)
     uint32_t address;
 
     `uvm_object_utils_begin(repeated_memory_transaction_seq)
+        `uvm_field_int(num_transactions, UVM_ALL_ON)
         `uvm_field_int(address, UVM_ALL_ON)
     `uvm_object_utils_end
 
@@ -27,6 +28,7 @@ class repeated_memory_transaction_seq extends uvm_sequence #(memory_transaction)
             mem_tx = memory_transaction::type_id::create(.name("mem_tx"), .contxt(get_full_name()));
             start_item(mem_tx);
             assert(mem_tx.randomize() with { mem_tx.req_address == address; });
+            mem_tx.print();
             finish_item(mem_tx);
         end
     endtask

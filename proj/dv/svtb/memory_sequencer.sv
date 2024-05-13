@@ -1,1 +1,0 @@
-typedef uvm_sequencer #(memory_transaction) memory_sequencer;

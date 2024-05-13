@@ -1,5 +1,5 @@
-class higher_memory_monitor extends uvm_monitor;
-    `uvm_component_utils(higher_memory_monitor)
+class memory_rsp_monitor extends uvm_monitor;
+    `uvm_component_utils(memory_rsp_monitor)
 
     uvm_analysis_port #(memory_transaction) mem_ap;
 

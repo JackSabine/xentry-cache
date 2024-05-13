@@ -19,10 +19,10 @@ class memory_simple_test extends uvm_test;
     endfunction
 
     task main_phase(uvm_phase phase);
-        repeated_memory_transaction_sequence mem_seq;
+        repeated_memory_transaction_seq mem_seq;
         higher_memory_response_seq hmem_rsp_seq;
 
-        mem_seq = repeated_memory_transaction_sequence::type_id::create(.name("mem_seq"));
+        mem_seq = repeated_memory_transaction_seq::type_id::create(.name("mem_seq"));
         hmem_rsp_seq = higher_memory_response_seq::type_id::create(.name("hmem_rsp_seq"));
         assert(mem_seq.randomize());
         `uvm_info("mem_seq", mem_seq.convert2string(), UVM_NONE)

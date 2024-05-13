@@ -1,5 +1,5 @@
-class memory_driver extends uvm_driver #(memory_transaction);
-    `uvm_component_utils(memory_driver)
+class cache_req_driver extends uvm_driver #(memory_transaction);
+    `uvm_component_utils(cache_req_driver)
 
     uvm_analysis_port #(memory_transaction) mem_ap;
 
@@ -32,7 +32,7 @@ class memory_driver extends uvm_driver #(memory_transaction);
 
             @(posedge req_vi.clk);
             `uvm_info(
-                "memory_driver",
+                get_full_name(),
                 $sformatf(
                     "Driving txn: %s",
                     mem_tx.convert2string()

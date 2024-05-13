@@ -5,18 +5,23 @@ package xentry_pkg;
     import xentry_types::*;
 
     `include "memory_transaction.sv"
-    `include "memory_transaction_sequences.sv"
-    `include "memory_sequencer.sv"
-    `include "memory_driver.sv"
-    `include "memory_monitor.sv"
-    `include "memory_agent.sv"
-    `include "higher_memory_sequencer.sv"
-    `include "higher_memory_driver.sv"
-    `include "higher_memory_monitor.sv"
-    `include "higher_memory_agent.sv"
 
-    `include "memory_scoreboard.sv"
-    `include "memory_environment.sv"
+    `include "../seq/one_memory_transaction_seq.sv"
+    `include "../seq/repeated_memory_transaction_seq.sv"
+    `include "../seq/higher_memory_response_seq.sv"
+
+    `include "../agents/cache_req_agent/cache_req_sequencer.sv"
+    `include "../agents/cache_req_agent/cache_req_driver.sv"
+    `include "../agents/cache_req_agent/cache_req_monitor.sv"
+    `include "../agents/cache_req_agent/cache_req_agent.sv"
+
+    `include "../agents/memory_rsp_agent/memory_rsp_sequencer.sv"
+    `include "../agents/memory_rsp_agent/memory_rsp_driver.sv"
+    `include "../agents/memory_rsp_agent/memory_rsp_monitor.sv"
+    `include "../agents/memory_rsp_agent/memory_rsp_agent.sv"
+
+    `include "scoreboard.sv"
+    `include "environment.sv"
 
     `include "tests.sv"
 endpackage

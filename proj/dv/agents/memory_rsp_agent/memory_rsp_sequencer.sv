@@ -1,5 +1,5 @@
-class higher_memory_sequencer extends uvm_sequencer #(memory_transaction);
-    `uvm_component_utils(higher_memory_sequencer)
+class memory_rsp_sequencer extends uvm_sequencer #(memory_transaction);
+    `uvm_component_utils(memory_rsp_sequencer)
 
     uvm_tlm_analysis_fifo #(memory_transaction) mem_tx_fifo;
     uvm_analysis_export #(memory_transaction) mem_tx_export;

@@ -1,5 +1,5 @@
-class higher_memory_driver extends uvm_driver #(memory_transaction);
-    `uvm_component_utils(higher_memory_driver)
+class memory_rsp_driver extends uvm_driver #(memory_transaction);
+    `uvm_component_utils(memory_rsp_driver)
 
     virtual higher_memory_if rsp_vi;
 

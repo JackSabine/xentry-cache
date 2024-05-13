@@ -1,5 +1,5 @@
-class memory_monitor extends uvm_monitor;
-    `uvm_component_utils(memory_monitor)
+class cache_req_monitor extends uvm_monitor;
+    `uvm_component_utils(cache_req_monitor)
 
     uvm_analysis_port #(memory_transaction) mem_ap;
 
@@ -34,13 +34,13 @@ class memory_monitor extends uvm_monitor;
                 mem_tx.req_size       = memory_operation_size_e'(req_vi.req_size);
                 mem_tx.req_store_word = req_vi.req_store_word;
 
-                `uvm_info("memory_monitor", "req_valid seen, awaiting req_fulfilled", UVM_MEDIUM)
+                `uvm_info(get_full_name(), "req_valid seen, awaiting req_fulfilled", UVM_MEDIUM)
 
                 @(posedge req_vi.req_fulfilled);
                 mem_tx.req_loaded_word = req_vi.req_loaded_word;
 
                 `uvm_info(
-                    "memory_monitor",
+                    get_full_name(),
                     $sformatf(
                         "Observed txn: %s",
                         mem_tx.convert2string()
@@ -51,5 +51,4 @@ class memory_monitor extends uvm_monitor;
             end
         end
    endtask
-
 endclass

@@ -2,12 +2,22 @@ module tb_top;
     import uvm_pkg::*;
     import xentry_pkg::*;
 
+    parameter LINE_SIZE = 32;
+    parameter CACHE_SIZE = 1024;
+    parameter XLEN = 32;
+
+    cache_config dut_config;
+
     logic clk = 1'b0;
     logic reset = 1'b1;
     cache_if req_if(clk);
     higher_memory_if rsp_if(clk);
 
-    icache dut (
+    icache #(
+        .LINE_SIZE(LINE_SIZE),
+        .CACHE_SIZE(CACHE_SIZE),
+        .XLEN(XLEN)
+    ) dut (
         .clk(clk),
         .reset(reset),
 
@@ -31,6 +41,10 @@ module tb_top;
     end
 
     initial begin
+        dut_config = cache_config::type_id::create("dut_config");
+        dut_config.set(LINE_SIZE, CACHE_SIZE, 1);
+        dut_config.print();
+
         uvm_config_db #(virtual cache_if)::set(
             .cntxt(null),
             .inst_name("uvm_test_top.*"),
@@ -43,7 +57,12 @@ module tb_top;
             .field_name("memory_responder_if"),
             .value(rsp_if)
         );
-
+        uvm_config_db #(cache_config)::set(
+            .cntxt(null),
+            .inst_name("*"),
+            .field_name("cache_config"),
+            .value(dut_config)
+        );
         run_test();
     end
 endmodule

@@ -5,6 +5,7 @@ package xentry_pkg;
     import xentry_types::*;
 
     `include "../model/memory_model.sv"
+    `include "../configs/cache_config.sv"
 
     `include "memory_transaction.sv"
 

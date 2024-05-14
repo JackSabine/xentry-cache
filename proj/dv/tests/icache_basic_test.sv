@@ -22,16 +22,18 @@ class icache_basic_test extends uvm_test;
         repeated_memory_transaction_seq mem_seq;
         higher_memory_response_seq hmem_rsp_seq;
 
+        phase.raise_objection(this);
+
         mem_seq = repeated_memory_transaction_seq::type_id::create(.name("mem_seq"));
         hmem_rsp_seq = higher_memory_response_seq::type_id::create(.name("hmem_rsp_seq"));
-        assert(mem_seq.randomize());
+        assert(mem_seq.randomize() with { mem_seq.num_transactions == 4; });
         `uvm_info("mem_seq", mem_seq.convert2string(), UVM_NONE)
         mem_seq.print();
-        mem_seq.set_starting_phase(phase);
-        mem_seq.set_automatic_phase_objection(.value(1));
         fork
-            mem_seq.start(mem_env.mem_agent.mem_seqr);
-            hmem_rsp_seq.start(mem_env.hmem_agent.hmem_seqr);
-        join
+            mem_seq.start(mem_env.mem_agent.mem_seqr);        // Runs until complete
+            hmem_rsp_seq.start(mem_env.hmem_agent.hmem_seqr); // Runs forever
+        join_any
+
+        phase.drop_objection(this);
     endtask
 endclass

@@ -44,7 +44,6 @@ class cache_req_driver extends uvm_driver #(memory_transaction);
             req_vi.req_operation  <= mem_tx.req_operation;
             req_vi.req_size       <= mem_tx.req_size;
             req_vi.req_store_word <= mem_tx.req_store_word;
-            seq_item_port.item_done();
             mem_ap.write(mem_tx);
 
             if (req_vi.req_fulfilled) begin
@@ -52,6 +51,8 @@ class cache_req_driver extends uvm_driver #(memory_transaction);
             end else while (!req_vi.req_fulfilled) begin
                 @(posedge req_vi.clk);
             end
+
+            seq_item_port.item_done();
         end
    endtask
 endclass

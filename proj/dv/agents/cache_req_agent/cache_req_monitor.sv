@@ -36,7 +36,12 @@ class cache_req_monitor extends uvm_monitor;
 
                 `uvm_info(get_full_name(), "req_valid seen, awaiting req_fulfilled", UVM_MEDIUM)
 
-                @(posedge req_vi.req_fulfilled);
+                if (!req_vi.req_fulfilled) begin
+                    while (!req_vi.req_fulfilled) begin
+                        @(posedge req_vi.clk);
+                    end
+                end
+
                 mem_tx.req_loaded_word = req_vi.req_loaded_word;
 
                 `uvm_info(
@@ -50,5 +55,21 @@ class cache_req_monitor extends uvm_monitor;
                 mem_ap.write(mem_tx);
             end
         end
-   endtask
+    endtask
+
+    task shutdown_phase(uvm_phase phase);
+        phase.raise_objection(this);
+
+        `uvm_info(get_full_name(), "Hello from shutdown phase!!", UVM_MEDIUM)
+
+        if (req_vi.req_fulfilled) begin
+            while (req_vi.req_fulfilled) begin
+                @(posedge req_vi.clk);
+            end
+        end
+
+        repeat(4) @(posedge req_vi.clk);
+
+        phase.drop_objection(this);
+    endtask
 endclass

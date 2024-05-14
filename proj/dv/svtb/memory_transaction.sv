@@ -12,6 +12,10 @@ class memory_transaction extends uvm_sequence_item;
         req_operation != MO_UNKNOWN;
     }
 
+    constraint loaded_value_con {
+        soft req_loaded_word == 0;
+    }
+
     function new(string name = "");
         super.new(name);
     endfunction
@@ -39,6 +43,7 @@ class read_only_memory_transaction extends memory_transaction;
 
     constraint read_only_con {
         req_operation inside {LOAD};
+        req_store_word == '1;
     }
 
     function new(string name = "");

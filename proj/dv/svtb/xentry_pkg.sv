@@ -4,6 +4,8 @@ package xentry_pkg;
     import uvm_pkg::*;
     import xentry_types::*;
 
+    `include "../model/memory_model.sv"
+
     `include "memory_transaction.sv"
 
     `include "../seq/one_memory_transaction_seq.sv"

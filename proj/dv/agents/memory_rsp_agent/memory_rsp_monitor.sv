@@ -5,6 +5,8 @@ class memory_rsp_monitor extends uvm_monitor;
 
     virtual higher_memory_if rsp_vi;
 
+    memory_model mem_model;
+
     function new(string name, uvm_component parent);
         super.new(name, parent);
     endfunction
@@ -17,14 +19,17 @@ class memory_rsp_monitor extends uvm_monitor;
             .field_name("memory_responder_if"),
             .value(rsp_vi)
         ));
+        assert(uvm_config_db #(memory_model)::get(
+            .cntxt(this),
+            .inst_name(""),
+            .field_name("memory_model"),
+            .value(mem_model)
+        )) else `uvm_fatal(get_full_name(), "Couldn't get memory_model from config db")
         mem_ap = new(.name("mem_ap"), .parent(this));
     endfunction
 
     task run_phase(uvm_phase phase);
         memory_transaction mem_tx;
-        uint32_t loaded_word;
-
-        loaded_word = 32'hABCD_0000;
 
         forever begin
             @(posedge rsp_vi.clk);
@@ -37,18 +42,14 @@ class memory_rsp_monitor extends uvm_monitor;
                 mem_tx.req_size       = WORD;
                 mem_tx.req_store_word = rsp_vi.req_store_word;
 
-                // MODEL LOOKUP
                 if (mem_tx.req_operation == STORE) begin
-                    // Update our memory model
-                    // TODO
+                    mem_model.write(mem_tx.req_address, mem_tx.req_store_word);
                 end else if (mem_tx.req_operation == LOAD) begin
-                    // Read from our memory model
-                    // TODO
-                    mem_tx.req_loaded_word = loaded_word++;
+                    mem_tx.req_loaded_word = mem_model.read(mem_tx.req_address);
                 end
 
                 `uvm_info(
-                    "higher_memory_monitor",
+                    get_full_name(),
                     $sformatf("Received request from cache:\n%s", mem_tx.convert2string()),
                     UVM_MEDIUM
                 )

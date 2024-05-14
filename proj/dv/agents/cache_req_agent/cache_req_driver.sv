@@ -23,14 +23,14 @@ class cache_req_driver extends uvm_driver #(memory_transaction);
     task run_phase(uvm_phase phase);
         memory_transaction mem_tx;
 
+        req_vi.req_valid <= 1'b0;
+
         #200;
 
         forever begin
-            @(posedge req_vi.clk);
             req_vi.req_valid <= 1'b0;
             seq_item_port.get_next_item(mem_tx);
 
-            @(posedge req_vi.clk);
             `uvm_info(
                 get_full_name(),
                 $sformatf(
@@ -47,7 +47,9 @@ class cache_req_driver extends uvm_driver #(memory_transaction);
             seq_item_port.item_done();
             mem_ap.write(mem_tx);
 
-            while (!req_vi.req_fulfilled) begin
+            if (req_vi.req_fulfilled) begin
+                @(posedge req_vi.clk);
+            end else while (!req_vi.req_fulfilled) begin
                 @(posedge req_vi.clk);
             end
         end

@@ -18,7 +18,7 @@ module icache_controller import xentry_types::*; (
     input wire valid_block_match,
 
     output logic load_mode,
-    output wire perform_write,
+    output logic perform_write,
     output logic clear_selected_valid_bit,
     output logic finish_new_line_install,
     output logic set_new_l2_block_address,
@@ -34,19 +34,16 @@ typedef enum logic[1:0] {
 
 icache_state_e state, next_state;
 
-logic mealy_perform_write, moore_perform_write;
-
-assign perform_write = mealy_perform_write | moore_perform_write;
-
 //// NEXT STATE LOGIC AND MEALY OUTPUTS ////
 always_comb begin
     {
-        mealy_perform_write,
+        perform_write,
         clear_selected_valid_bit,
         finish_new_line_install,
         set_new_l2_block_address,
         reset_counter,
-        pipe_req_fulfilled
+        pipe_req_fulfilled,
+        decrement_counter
     } = '0;
 
     case (state)
@@ -85,6 +82,11 @@ always_comb begin
         end
 
         ST_ALLOCATE: begin
+            if (l2_req_fulfilled) begin
+                perform_write = 1'b1;
+                decrement_counter = 1'b1;
+            end
+
             if (counter_done) begin
                 next_state = ST_IDLE;
                 finish_new_line_install = 1'b1;
@@ -96,12 +98,13 @@ always_comb begin
         default: begin
             next_state = ST_UNKNOWN;
             {
-                mealy_perform_write,
+                perform_write,
                 clear_selected_valid_bit,
                 finish_new_line_install,
                 set_new_l2_block_address,
                 reset_counter,
-                pipe_req_fulfilled
+                pipe_req_fulfilled,
+                decrement_counter
             } = 'x;
         end
     endcase
@@ -110,10 +113,8 @@ end
 //// MOORE OUTPUTS ////
 always_comb begin
     load_mode = 1'b0;
-    decrement_counter = 1'b0;
     l2_req_type = LOAD;
     l2_req_valid = 1'b0;
-    moore_perform_write = 1'b0;
 
     case (state) inside
         ST_IDLE: begin
@@ -124,19 +125,12 @@ always_comb begin
             load_mode = 1'b1;
             l2_req_type = LOAD;
             l2_req_valid = 1'b1;
-            moore_perform_write = 1'b1;
-
-            if (l2_req_fulfilled) begin
-                decrement_counter = 1'b1;
-            end
         end
 
         default: begin
             load_mode = 1'bx;
-            decrement_counter = 1'bx;
             l2_req_type = MO_UNKNOWN;
             l2_req_valid = 1'bx;
-            moore_perform_write = 1'bx;
         end
     endcase
 end

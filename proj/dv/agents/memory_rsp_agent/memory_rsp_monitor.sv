@@ -51,7 +51,7 @@ class memory_rsp_monitor extends uvm_monitor;
                 `uvm_info(
                     get_full_name(),
                     $sformatf("Received request from cache:\n%s", mem_tx.convert2string()),
-                    UVM_MEDIUM
+                    UVM_DEBUG
                 )
                 mem_ap.write(mem_tx);
             end

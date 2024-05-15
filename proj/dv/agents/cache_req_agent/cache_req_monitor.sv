@@ -34,7 +34,7 @@ class cache_req_monitor extends uvm_monitor;
                 mem_tx.req_size       = memory_operation_size_e'(req_vi.req_size);
                 mem_tx.req_store_word = req_vi.req_store_word;
 
-                `uvm_info(get_full_name(), "req_valid seen, awaiting req_fulfilled", UVM_MEDIUM)
+                `uvm_info(get_full_name(), "req_valid seen, awaiting req_fulfilled", UVM_DEBUG)
 
                 if (!req_vi.req_fulfilled) begin
                     while (!req_vi.req_fulfilled) begin
@@ -50,7 +50,7 @@ class cache_req_monitor extends uvm_monitor;
                         "Observed txn: %s",
                         mem_tx.convert2string()
                     ),
-                    UVM_MEDIUM
+                    UVM_DEBUG
                 )
                 mem_ap.write(mem_tx);
             end
@@ -59,8 +59,6 @@ class cache_req_monitor extends uvm_monitor;
 
     task shutdown_phase(uvm_phase phase);
         phase.raise_objection(this);
-
-        `uvm_info(get_full_name(), "Hello from shutdown phase!!", UVM_MEDIUM)
 
         if (req_vi.req_fulfilled) begin
             while (req_vi.req_fulfilled) begin

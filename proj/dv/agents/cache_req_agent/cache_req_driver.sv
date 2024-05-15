@@ -37,7 +37,7 @@ class cache_req_driver extends uvm_driver #(memory_transaction);
                     "Driving txn: %s",
                     mem_tx.convert2string()
                 ),
-                UVM_MEDIUM
+                UVM_DEBUG
             )
             req_vi.req_valid      <= 1'b1;
             req_vi.req_address    <= mem_tx.req_address;

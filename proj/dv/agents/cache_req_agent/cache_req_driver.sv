@@ -23,10 +23,6 @@ class cache_req_driver extends uvm_driver #(memory_transaction);
     task run_phase(uvm_phase phase);
         memory_transaction mem_tx;
 
-        req_vi.req_valid <= 1'b0;
-
-        #200;
-
         forever begin
             req_vi.req_valid <= 1'b0;
             seq_item_port.get_next_item(mem_tx);

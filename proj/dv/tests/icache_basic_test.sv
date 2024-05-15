@@ -18,6 +18,19 @@ class icache_basic_test extends uvm_test;
         memory_transaction::type_id::set_type_override(icache_memory_transaction::get_type());
     endfunction
 
+    task reset_phase(uvm_phase phase);
+        reset_seq rst_seq;
+
+        phase.raise_objection(this);
+
+        rst_seq = reset_seq::type_id::create(.name("rst_seq"));
+        assert(rst_seq.randomize());
+        rst_seq.print();
+        rst_seq.start(mem_env.rst_agent.rst_seqr);
+
+        phase.drop_objection(this);
+    endtask
+
     task main_phase(uvm_phase phase);
         repeated_memory_transaction_seq mem_seq;
         higher_memory_response_seq hmem_rsp_seq;

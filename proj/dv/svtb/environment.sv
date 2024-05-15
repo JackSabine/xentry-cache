@@ -3,6 +3,7 @@ class memory_env extends uvm_env;
 
     cache_req_agent mem_agent;
     memory_rsp_agent hmem_agent;
+    reset_agent rst_agent;
     memory_scoreboard mem_sb;
 
     memory_model mem_model;
@@ -23,6 +24,7 @@ class memory_env extends uvm_env;
 
         mem_agent  = cache_req_agent::type_id::create(.name("mem_agent"), .parent(this));
         hmem_agent = memory_rsp_agent::type_id::create(.name("hmem_agent"), .parent(this));
+        rst_agent  = reset_agent::type_id::create(.name("rst_agent"), .parent(this));
         mem_sb     = memory_scoreboard::type_id::create(.name("mem_sb"), .parent(this));
     endfunction
 

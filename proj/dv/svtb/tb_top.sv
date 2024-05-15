@@ -9,9 +9,9 @@ module tb_top;
     cache_config dut_config;
 
     logic clk = 1'b0;
-    logic reset = 1'b1;
     cache_if req_if(clk);
     higher_memory_if rsp_if(clk);
+    reset_if rst_if(clk);
 
     icache #(
         .LINE_SIZE(LINE_SIZE),
@@ -19,7 +19,7 @@ module tb_top;
         .XLEN(XLEN)
     ) dut (
         .clk(clk),
-        .reset(reset),
+        .reset(rst_if.reset),
 
         .pipe_req_address  (req_if.req_address),
         .pipe_req_type     (req_if.req_operation),
@@ -35,10 +35,6 @@ module tb_top;
     );
 
     always #10 clk = !clk;
-    initial begin
-        repeat(10) @(posedge clk);
-        reset = 1'b0;
-    end
 
     initial begin
         dut_config = cache_config::type_id::create("dut_config");
@@ -56,6 +52,12 @@ module tb_top;
             .inst_name("uvm_test_top.*"),
             .field_name("memory_responder_if"),
             .value(rsp_if)
+        );
+        uvm_config_db #(virtual reset_if)::set(
+            .cntxt(null),
+            .inst_name("uvm_test_top.*"),
+            .field_name("reset_if"),
+            .value(rst_if)
         );
         uvm_config_db #(cache_config)::set(
             .cntxt(null),

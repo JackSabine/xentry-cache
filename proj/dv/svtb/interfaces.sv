@@ -26,3 +26,9 @@ interface higher_memory_if import xentry_types::*; #(
     logic [XLEN-1:0] req_loaded_word;
     logic req_fulfilled;
 endinterface
+
+interface reset_if (
+    input bit clk
+);
+    logic reset;
+endinterface

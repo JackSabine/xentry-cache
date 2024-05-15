@@ -16,7 +16,7 @@ class memory_env extends uvm_env;
         mem_model = new;
         uvm_config_db #(memory_model)::set(
             .cntxt(this),
-            .inst_name("hmem_agent*"),
+            .inst_name("*"),
             .field_name("memory_model"),
             .value(mem_model)
         );

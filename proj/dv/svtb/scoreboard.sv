@@ -10,12 +10,21 @@ class memory_scoreboard extends uvm_scoreboard;
     uvm_tlm_fifo #(memory_transaction) expfifo;
     uvm_tlm_fifo #(memory_transaction) outfifo;
 
+    memory_model mem_model;
+
     function void build_phase(uvm_phase phase);
         super.build_phase(phase);
         aport_drv = new("aport_drv", this);
         aport_mon = new("aport_mon", this);
         expfifo   = new("expfifo", this);
         outfifo   = new("outfifo", this);
+
+        assert(uvm_config_db #(memory_model)::get(
+            .cntxt(this),
+            .inst_name(""),
+            .field_name("memory_model"),
+            .value(mem_model)
+        )) else `uvm_fatal(get_full_name(), "Couldn't get memory_model from config db")
     endfunction
 
     function new (string name, uvm_component parent);
@@ -23,7 +32,15 @@ class memory_scoreboard extends uvm_scoreboard;
     endfunction
 
     function void write_drv(memory_transaction tr);
-
+        if (tr.req_operation == LOAD) begin
+            tr.req_loaded_word = mem_model.read(tr.req_address);
+        end else if (tr.req_operation == STORE) begin
+            tr.req_loaded_word = tr.req_store_word;
+        end else begin
+            // TODO
+        end
+        `uvm_info("write_drv OUT ", tr.convert2string(), UVM_HIGH)
+        void'(expfifo.try_put(tr));
     endfunction
 
     function void write_mon(memory_transaction tr);
@@ -40,11 +57,29 @@ class memory_scoreboard extends uvm_scoreboard;
             outfifo.get(out_tr);
             if (out_tr.compare(exp_tr)) begin
                 PASS();
-                `uvm_info ("PASS ", $sformatf("Actual=%s Expected=%s \n", out_tr.convert2string(), exp_tr.convert2string()), UVM_HIGH)
+                `uvm_info (
+                    "PASS ",
+                    $sformatf(
+                        {
+                            "\n** Actual  =%s",
+                            "\n** Expected=%s"
+                        },
+                        out_tr.convert2string(), exp_tr.convert2string()
+                    ),
+                    UVM_HIGH
+                )
             end else begin
                 ERROR();
-                `uvm_error("ERROR", $sformatf("Actual=%s Expected=%s \n",
-                out_tr.convert2string(), exp_tr.convert2string()))
+                `uvm_error(
+                    "ERROR",
+                    $sformatf(
+                        {
+                            "\n** Actual  =%s",
+                            "\n** Expected=%s"
+                        },
+                        out_tr.convert2string(), exp_tr.convert2string()
+                    )
+                )
             end
         end
     endtask

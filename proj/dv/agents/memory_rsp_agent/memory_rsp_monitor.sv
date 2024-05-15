@@ -32,7 +32,7 @@ class memory_rsp_monitor extends uvm_monitor;
         memory_transaction mem_tx;
 
         forever begin
-            @(posedge rsp_vi.clk);
+            @(negedge rsp_vi.clk);
 
             if (rsp_vi.req_valid) begin
                 mem_tx = memory_transaction::type_id::create(.name("mem_tx"), .contxt(get_full_name()));

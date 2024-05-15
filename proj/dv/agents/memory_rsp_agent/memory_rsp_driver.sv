@@ -20,23 +20,27 @@ class memory_rsp_driver extends uvm_driver #(memory_transaction);
     task run_phase(uvm_phase phase);
         memory_transaction mem_tx;
 
-        forever begin
-            rsp_vi.req_fulfilled <= 1'b0;
-            seq_item_port.get_next_item(mem_tx);
+        fork
+            forever begin
+                @(negedge rsp_vi.clk);
+                rsp_vi.req_fulfilled <= rsp_vi.req_valid;
+            end
 
-            `uvm_info(
-                "memory_driver",
-                $sformatf(
-                    "Driving txn:\n%s",
-                    mem_tx.convert2string()
-                ),
-                UVM_MEDIUM
-            )
+            forever begin
+                seq_item_port.get_next_item(mem_tx);
 
-            rsp_vi.req_fulfilled <= 1'b1;
-            rsp_vi.req_loaded_word <= mem_tx.req_loaded_word;
-            seq_item_port.item_done();
-            @(posedge rsp_vi.clk);
-        end
+                `uvm_info(
+                    "memory_driver",
+                    $sformatf(
+                        "Driving txn:\n%s",
+                        mem_tx.convert2string()
+                    ),
+                    UVM_DEBUG
+                )
+
+                rsp_vi.req_loaded_word <= mem_tx.req_loaded_word;
+                seq_item_port.item_done();
+            end
+        join
     endtask
 endclass

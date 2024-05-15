@@ -9,7 +9,7 @@ class icache_basic_test extends uvm_test;
 
     function void start_of_simulation_phase(uvm_phase phase);
         super.start_of_simulation_phase(phase);
-        uvm_root::get().set_timeout(1000ns, 1);
+        uvm_root::get().set_timeout(100000ns, 1);
     endfunction
 
     function void build_phase(uvm_phase phase);

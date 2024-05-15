@@ -19,11 +19,12 @@ class memory_rsp_driver extends uvm_driver #(memory_transaction);
 
     task run_phase(uvm_phase phase);
         memory_transaction mem_tx;
+        bit is_hit;
 
         fork
             forever begin
-                @(negedge rsp_vi.clk);
-                rsp_vi.req_fulfilled <= rsp_vi.req_valid;
+                @(negedge rsp_vi.clk or is_hit);
+                rsp_vi.req_fulfilled <= rsp_vi.req_valid & is_hit;
             end
 
             forever begin
@@ -37,6 +38,18 @@ class memory_rsp_driver extends uvm_driver #(memory_transaction);
                     ),
                     UVM_DEBUG
                 )
+
+                assert(std::randomize(is_hit) with {
+                    is_hit dist {
+                        1 := 60,
+                        0 := 40
+                    };
+                }) else `uvm_fatal(get_full_name(), "Couldn't randomize is_hit")
+
+                if (!is_hit) begin
+                    repeat(2) @(negedge rsp_vi.clk);
+                    is_hit = 1'b1;
+                end
 
                 rsp_vi.req_loaded_word <= mem_tx.req_loaded_word;
                 seq_item_port.item_done();

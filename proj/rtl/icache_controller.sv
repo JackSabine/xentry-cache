@@ -1,4 +1,4 @@
-module icache_controller import xentry_types::*; (
+module icache_controller import torrence_types::*; (
     //// TOP LEVEL ////
     input wire clk,
     input wire reset,

@@ -1,6 +1,6 @@
 module tb_top;
     import uvm_pkg::*;
-    import xentry_pkg::*;
+    import torrence_pkg::*;
 
     parameter LINE_SIZE = 32;
     parameter CACHE_SIZE = 1024;

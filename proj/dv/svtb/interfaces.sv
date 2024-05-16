@@ -1,4 +1,4 @@
-interface cache_if import xentry_types::*; #(
+interface cache_if import torrence_types::*; #(
     parameter XLEN = 32
 ) (
     input bit clk
@@ -13,7 +13,7 @@ interface cache_if import xentry_types::*; #(
     logic req_fulfilled;
 endinterface
 
-interface higher_memory_if import xentry_types::*; #(
+interface higher_memory_if import torrence_types::*; #(
     parameter XLEN = 32
 ) (
     input bit clk

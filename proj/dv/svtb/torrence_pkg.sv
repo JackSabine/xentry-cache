@@ -1,8 +1,8 @@
 `include "uvm_macros.svh"
 
-package xentry_pkg;
+package torrence_pkg;
     import uvm_pkg::*;
-    import xentry_types::*;
+    import torrence_types::*;
 
     `include "../model/memory_model.sv"
     `include "../configs/cache_config.sv"

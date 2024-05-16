@@ -1,5 +1,5 @@
 
-package xentry_types;
+package torrence_types;
     typedef enum logic[1:0] {
         BYTE = 2'b00,
         HALF,

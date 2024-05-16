@@ -1,4 +1,4 @@
-import xentry_types::*;
+import torrence_types::*;
 
 class memory_transaction extends uvm_sequence_item;
 

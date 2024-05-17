@@ -87,7 +87,7 @@ always_comb begin
                 decrement_counter = 1'b1;
             end
 
-            if (counter_done) begin
+            if (counter_done & l2_req_fulfilled) begin
                 next_state = ST_IDLE;
                 finish_new_line_install = 1'b1;
             end else begin

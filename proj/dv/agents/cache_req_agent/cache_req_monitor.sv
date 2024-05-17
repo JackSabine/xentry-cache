@@ -1,7 +1,7 @@
 class cache_req_monitor extends uvm_monitor;
     `uvm_component_utils(cache_req_monitor)
 
-    uvm_analysis_port #(memory_transaction) mem_ap;
+    uvm_analysis_port #(memory_transaction) creq_ap;
 
     virtual cache_if req_vi;
 
@@ -17,7 +17,7 @@ class cache_req_monitor extends uvm_monitor;
             .field_name("memory_requester_if"),
             .value(req_vi)
         ));
-        mem_ap = new(.name("mem_ap"), .parent(this));
+        creq_ap = new(.name("creq_ap"), .parent(this));
     endfunction
 
     task run_phase(uvm_phase phase);
@@ -52,7 +52,7 @@ class cache_req_monitor extends uvm_monitor;
                     ),
                     UVM_DEBUG
                 )
-                mem_ap.write(mem_tx);
+                creq_ap.write(mem_tx);
             end
         end
     endtask

@@ -1,10 +1,10 @@
-class memory_env extends uvm_env;
-    `uvm_component_utils(memory_env)
+class environment extends uvm_env;
+    `uvm_component_utils(environment)
 
-    cache_req_agent mem_agent;
-    memory_rsp_agent hmem_agent;
+    cache_req_agent creq_agent;
+    memory_rsp_agent mrsp_agent;
     reset_agent rst_agent;
-    memory_scoreboard mem_sb;
+    scoreboard sb;
 
     memory_model mem_model;
 
@@ -22,15 +22,15 @@ class memory_env extends uvm_env;
             .value(mem_model)
         );
 
-        mem_agent  = cache_req_agent::type_id::create(.name("mem_agent"), .parent(this));
-        hmem_agent = memory_rsp_agent::type_id::create(.name("hmem_agent"), .parent(this));
+        creq_agent  = cache_req_agent::type_id::create(.name("creq_agent"), .parent(this));
+        mrsp_agent = memory_rsp_agent::type_id::create(.name("mrsp_agent"), .parent(this));
         rst_agent  = reset_agent::type_id::create(.name("rst_agent"), .parent(this));
-        mem_sb     = memory_scoreboard::type_id::create(.name("mem_sb"), .parent(this));
+        sb         = scoreboard::type_id::create(.name("sb"), .parent(this));
     endfunction
 
     function void connect_phase(uvm_phase phase);
         super.connect_phase(phase);
-        mem_agent.mon_mem_ap.connect(mem_sb.aport_mon);
-        mem_agent.drv_mem_ap.connect(mem_sb.aport_drv);
+        creq_agent.creq_mon_ap.connect(sb.aport_mon);
+        creq_agent.creq_drv_ap.connect(sb.aport_drv);
     endfunction
 endclass

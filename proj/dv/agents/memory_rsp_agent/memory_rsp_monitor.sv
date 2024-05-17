@@ -1,7 +1,7 @@
 class memory_rsp_monitor extends uvm_monitor;
     `uvm_component_utils(memory_rsp_monitor)
 
-    uvm_analysis_port #(memory_transaction) mem_ap;
+    uvm_analysis_port #(memory_transaction) mrsp_ap;
 
     virtual higher_memory_if rsp_vi;
 
@@ -25,7 +25,7 @@ class memory_rsp_monitor extends uvm_monitor;
             .field_name("memory_model"),
             .value(mem_model)
         )) else `uvm_fatal(get_full_name(), "Couldn't get memory_model from config db")
-        mem_ap = new(.name("mem_ap"), .parent(this));
+        mrsp_ap = new(.name("mrsp_ap"), .parent(this));
     endfunction
 
     task run_phase(uvm_phase phase);
@@ -53,7 +53,7 @@ class memory_rsp_monitor extends uvm_monitor;
                     $sformatf("Received request from cache:\n%s", mem_tx.convert2string()),
                     UVM_DEBUG
                 )
-                mem_ap.write(mem_tx);
+                mrsp_ap.write(mem_tx);
             end
         end
    endtask

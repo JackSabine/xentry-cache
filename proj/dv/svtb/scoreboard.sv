@@ -1,11 +1,11 @@
 `uvm_analysis_imp_decl( _drv )
 `uvm_analysis_imp_decl( _mon )
 
-class memory_scoreboard extends uvm_scoreboard;
-    `uvm_component_utils(memory_scoreboard)
+class scoreboard extends uvm_scoreboard;
+    `uvm_component_utils(scoreboard)
 
-    uvm_analysis_imp_drv #(memory_transaction, memory_scoreboard) aport_drv;
-    uvm_analysis_imp_mon #(memory_transaction, memory_scoreboard) aport_mon;
+    uvm_analysis_imp_drv #(memory_transaction, scoreboard) aport_drv;
+    uvm_analysis_imp_mon #(memory_transaction, scoreboard) aport_mon;
 
     uvm_tlm_fifo #(memory_transaction) expfifo;
     uvm_tlm_fifo #(memory_transaction) outfifo;

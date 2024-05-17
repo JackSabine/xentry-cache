@@ -12,7 +12,7 @@ package torrence_pkg;
 
     `include "../seq/one_memory_transaction_seq.sv"
     `include "../seq/repeated_memory_transaction_seq.sv"
-    `include "../seq/higher_memory_response_seq.sv"
+    `include "../seq/memory_response_seq.sv"
     `include "../seq/reset_seq.sv"
 
     `include "../agents/cache_req_agent/cache_req_sequencer.sv"

@@ -1,7 +1,7 @@
 class cache_req_driver extends uvm_driver #(memory_transaction);
     `uvm_component_utils(cache_req_driver)
 
-    uvm_analysis_port #(memory_transaction) mem_ap;
+    uvm_analysis_port #(memory_transaction) creq_ap;
 
     virtual cache_if req_vi;
 
@@ -17,7 +17,7 @@ class cache_req_driver extends uvm_driver #(memory_transaction);
             .field_name("memory_requester_if"),
             .value(req_vi)
         ));
-        mem_ap = new(.name("mem_ap"), .parent(this));
+        creq_ap = new(.name("creq_ap"), .parent(this));
     endfunction
 
     task run_phase(uvm_phase phase);
@@ -40,7 +40,7 @@ class cache_req_driver extends uvm_driver #(memory_transaction);
             req_vi.req_operation  <= mem_tx.req_operation;
             req_vi.req_size       <= mem_tx.req_size;
             req_vi.req_store_word <= mem_tx.req_store_word;
-            mem_ap.write(mem_tx);
+            creq_ap.write(mem_tx);
 
             if (req_vi.req_fulfilled) begin
                 @(posedge req_vi.clk);

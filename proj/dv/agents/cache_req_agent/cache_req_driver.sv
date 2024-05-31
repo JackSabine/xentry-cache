@@ -40,6 +40,7 @@ class cache_req_driver extends uvm_driver #(memory_transaction);
             req_vi.req_operation  <= mem_tx.req_operation;
             req_vi.req_size       <= mem_tx.req_size;
             req_vi.req_store_word <= mem_tx.req_store_word;
+            mem_tx.t_issued = $time();
             creq_ap.write(mem_tx);
 
             if (req_vi.req_fulfilled) begin

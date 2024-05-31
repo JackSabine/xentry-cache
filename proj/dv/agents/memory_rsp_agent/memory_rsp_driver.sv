@@ -51,6 +51,8 @@ class memory_rsp_driver extends uvm_driver #(memory_transaction);
                     is_hit = 1'b1;
                 end
 
+                mem_tx.t_fulfilled = $time();
+
                 rsp_vi.req_loaded_word <= mem_tx.req_loaded_word;
                 seq_item_port.item_done();
             end

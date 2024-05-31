@@ -48,6 +48,8 @@ class memory_rsp_monitor extends uvm_monitor;
                     mem_tx.req_loaded_word = mem_model.read(mem_tx.req_address);
                 end
 
+                mem_tx.t_issued = $time();
+
                 `uvm_info(
                     get_full_name(),
                     $sformatf("Received request from cache:\n%s", mem_tx.convert2string()),

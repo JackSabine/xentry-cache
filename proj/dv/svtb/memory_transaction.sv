@@ -8,6 +8,9 @@ class memory_transaction extends uvm_sequence_item;
     rand uint32_t                req_store_word;
     rand uint32_t                req_loaded_word;
 
+    time t_issued;
+    time t_fulfilled;
+
     constraint operation {
         req_operation != MO_UNKNOWN;
     }

@@ -43,6 +43,7 @@ class cache_req_monitor extends uvm_monitor;
                 end
 
                 mem_tx.req_loaded_word = req_vi.req_loaded_word;
+                mem_tx.t_fulfilled = $time();
 
                 `uvm_info(
                     get_full_name(),

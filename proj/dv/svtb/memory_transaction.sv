@@ -48,6 +48,7 @@ class memory_transaction extends uvm_sequence_item;
         `uvm_field_int(req_address,     UVM_ALL_ON | UVM_HEX)
         `uvm_field_int(req_store_word,  UVM_ALL_ON | UVM_HEX)
         `uvm_field_int(req_loaded_word, UVM_ALL_ON | UVM_HEX)
+        // TODO add uvm_field_time?
     `uvm_object_utils_end
 endclass
 

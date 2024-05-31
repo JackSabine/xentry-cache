@@ -61,7 +61,35 @@ class read_only_memory_transaction extends memory_transaction;
     endfunction
 endclass
 
-class icache_memory_transaction extends read_only_memory_transaction;
+class icache_read_only_memory_transaction extends read_only_memory_transaction;
+    `uvm_object_utils(icache_read_only_memory_transaction)
+
+    constraint word_only_con {
+        req_size == WORD;
+    }
+
+    function new(string name = "");
+        super.new(name);
+    endfunction
+endclass
+
+class read_and_flush_memory_transaction extends memory_transaction;
+    `uvm_object_utils(read_and_flush_memory_transaction)
+
+    constraint read_only_con {
+        req_operation dist {
+            LOAD    := 90,
+            CLFLUSH := 10
+        };
+        req_store_word == '1;
+    }
+
+    function new(string name = "");
+        super.new(name);
+    endfunction
+endclass
+
+class icache_memory_transaction extends read_and_flush_memory_transaction;
     `uvm_object_utils(icache_memory_transaction)
 
     constraint word_only_con {
@@ -72,3 +100,4 @@ class icache_memory_transaction extends read_only_memory_transaction;
         super.new(name);
     endfunction
 endclass
+

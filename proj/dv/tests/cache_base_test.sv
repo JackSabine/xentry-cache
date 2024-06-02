@@ -1,7 +1,7 @@
 class cache_base_test extends uvm_test;
     `uvm_component_utils(cache_base_test)
 
-    memory_env mem_env;
+    environment mem_env;
 
     function new (string name, uvm_component parent);
         super.new(name, parent);
@@ -14,7 +14,7 @@ class cache_base_test extends uvm_test;
 
     function void build_phase(uvm_phase phase);
         super.build_phase(phase);
-        mem_env = memory_env::type_id::create(.name("mem_env"), .parent(this));
+        mem_env = environment::type_id::create(.name("mem_env"), .parent(this));
         set_transaction_type();
     endfunction
 
@@ -37,18 +37,18 @@ class cache_base_test extends uvm_test;
 
     task main_phase(uvm_phase phase);
         repeated_memory_transaction_seq mem_seq;
-        higher_memory_response_seq hmem_rsp_seq;
+        memory_response_seq mem_rsp_seq;
 
         phase.raise_objection(this);
 
         mem_seq = repeated_memory_transaction_seq::type_id::create(.name("mem_seq"));
-        hmem_rsp_seq = higher_memory_response_seq::type_id::create(.name("hmem_rsp_seq"));
+        mem_rsp_seq = memory_response_seq::type_id::create(.name("mem_rsp_seq"));
         assert(mem_seq.randomize() with { mem_seq.num_transactions == 4; });
         `uvm_info("mem_seq", mem_seq.convert2string(), UVM_NONE)
         mem_seq.print();
         fork
             mem_seq.start(mem_env.mem_agent.mem_seqr);        // Runs until complete
-            hmem_rsp_seq.start(mem_env.hmem_agent.hmem_seqr); // Runs forever
+            mem_rsp_seq.start(mem_env.hmem_agent.hmem_seqr); // Runs forever
         join_any
 
         phase.drop_objection(this);

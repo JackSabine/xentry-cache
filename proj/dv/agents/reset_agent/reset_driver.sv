@@ -14,7 +14,7 @@ class reset_driver extends uvm_driver #(reset_transaction);
             .inst_name(""),
             .field_name("reset_if"),
             .value(rst_vi)
-        ));
+        )) else `uvm_fatal(get_full_name(), "Couldn't get reset_if from config db")
     endfunction
 
     task run_phase(uvm_phase phase);

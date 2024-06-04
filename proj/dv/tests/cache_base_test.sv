@@ -28,7 +28,7 @@ class cache_base_test extends uvm_test;
         phase.raise_objection(this);
 
         rst_seq = reset_seq::type_id::create(.name("rst_seq"));
-        assert(rst_seq.randomize());
+        assert(rst_seq.randomize()) else `uvm_fatal(get_full_name(), "Couldn't randomize rst_seq");
         rst_seq.print();
         rst_seq.start(mem_env.rst_agent.rst_seqr);
 
@@ -43,7 +43,7 @@ class cache_base_test extends uvm_test;
 
         mem_seq = repeated_memory_transaction_seq::type_id::create(.name("mem_seq"));
         mem_rsp_seq = memory_response_seq::type_id::create(.name("mem_rsp_seq"));
-        assert(mem_seq.randomize() with { mem_seq.num_transactions == 4; });
+        assert(mem_seq.randomize() with { mem_seq.num_transactions == 4; }) else `uvm_fatal(get_full_name(), "Couldn't randomize mem_seq")
         `uvm_info("mem_seq", mem_seq.convert2string(), UVM_NONE)
         mem_seq.print();
         fork

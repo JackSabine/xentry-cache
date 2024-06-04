@@ -73,14 +73,14 @@ class cache extends memory_element;
             this.sets[set].set_indexed_victim_word(
                 i,
                 this.lower_memory.read(
-                    this.construct_addr(tag, set, i)
+                    this.construct_addr(tag, set, 4*i)
                 )
             );
         end
 
         this.sets[set].install(tag);
 
-        assert(this.sets[set].is_cached(tag));
+        assert(this.sets[set].is_cached(tag)) else $fatal(1, "cache::handle_miss() did not correctly install the block");
     endfunction
 
     // Top-level cache read

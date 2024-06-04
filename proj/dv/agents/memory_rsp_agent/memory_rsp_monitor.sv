@@ -18,7 +18,7 @@ class memory_rsp_monitor extends uvm_monitor;
             .inst_name(""),
             .field_name("memory_responder_if"),
             .value(rsp_vi)
-        ));
+        )) else `uvm_fatal(get_full_name(), "Couldn't get memory_responder_if from config db")
         assert(uvm_config_db #(main_memory)::get(
             .cntxt(this),
             .inst_name(""),

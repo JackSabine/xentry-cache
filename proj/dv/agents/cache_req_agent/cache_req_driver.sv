@@ -16,7 +16,7 @@ class cache_req_driver extends uvm_driver #(memory_transaction);
             .inst_name(""),
             .field_name("memory_requester_if"),
             .value(req_vi)
-        ));
+        )) else `uvm_fatal(get_full_name(), "Couldn't get memory_requester_if from config db")
         creq_ap = new(.name("creq_ap"), .parent(this));
     endfunction
 

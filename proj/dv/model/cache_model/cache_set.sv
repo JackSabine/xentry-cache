@@ -30,7 +30,7 @@ class cache_set;
             end
         end
 
-        $fatal("No victim had maximum recency counter");
+        $fatal(1, "No victim had maximum recency counter");
     endfunction
 
     local function uint8_t get_hit_way(uint32_t tag);
@@ -40,7 +40,7 @@ class cache_set;
             end
         end
 
-        $fatal("get_hit_way:: No way matched requested tag");
+        $fatal(1, "get_hit_way:: No way matched requested tag");
     endfunction
 
     function bit is_victim_dirty();

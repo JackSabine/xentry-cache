@@ -14,7 +14,7 @@ class memory_rsp_driver extends uvm_driver #(memory_transaction);
             .inst_name(""),
             .field_name("memory_responder_if"),
             .value(rsp_vi)
-        ));
+        )) else `uvm_fatal(get_full_name(), "Couldn't get memory_responder_if from config db")
     endfunction
 
     task run_phase(uvm_phase phase);

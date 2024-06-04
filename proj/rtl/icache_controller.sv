@@ -74,6 +74,9 @@ always_comb begin
                             // STOREs are treated as if they were LOADs
                             // No dirty bits are set
                         end
+                        default: begin : x
+                            next_state = ST_UNKNOWN;
+                        end
                     endcase
                 end
             end else begin

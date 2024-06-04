@@ -10,8 +10,8 @@ class scoreboard extends uvm_scoreboard;
     uvm_tlm_fifo #(memory_transaction) expfifo;
     uvm_tlm_fifo #(memory_transaction) outfifo;
 
-    memory_model mem_model;
-    cache_model cch_model;
+    // memory_model mem_model;
+    // cache_model cch_model;
 
     static uint32_t cache_miss_delay;
     static uint32_t cache_flush_delay;
@@ -27,12 +27,12 @@ class scoreboard extends uvm_scoreboard;
         expfifo   = new("expfifo", this);
         outfifo   = new("outfifo", this);
 
-        assert(uvm_config_db #(memory_model)::get(
-            .cntxt(this),
-            .inst_name(""),
-            .field_name("memory_model"),
-            .value(mem_model)
-        )) else `uvm_fatal(get_full_name(), "Couldn't get memory_model from config db")
+        // assert(uvm_config_db #(memory_model)::get(
+        //     .cntxt(this),
+        //     .inst_name(""),
+        //     .field_name("memory_model"),
+        //     .value(mem_model)
+        // )) else `uvm_fatal(get_full_name(), "Couldn't get memory_model from config db")
     endfunction
 
     function new (string name, uvm_component parent);
@@ -46,37 +46,8 @@ class scoreboard extends uvm_scoreboard;
         // tr has t_issued
         // use to predict t_fulfilled
 
-        tr.t_fulfilled = tr.t_issued;
-
-        case (tr.req_type) inside
-            LOAD, STORE: begin
-                if (!cch_model.is_cached(tr.req_address)) begin
-                    tr.t_fulfilled += cache_miss_delay;
-
-                    if (cch_model.is_victim_dirty(tr.req_address)) begin
-                        tr.t_fulfilled += cache_miss_delay; // FIXME
-                        cch_model.clear_dirty(tr.req_address);
-                        // Read out cacheline and dump to mem_model
-                        cch_model.evict(tr.req_address);
-                    end
-
-                    cch_model.install(tr.req_address, mem_model.read_cacheline(tr.req_address));
-                end
-
-            end
-
-            CLFLUSH: begin
-                if (cch_model.is_cached(tr.req_address) && cch_model.is_dirty(tr.req_address)) begin
-                    tr.t_fulfilled += cache_flush_delay;
-                    cch_model.clear_dirty(tr.req_address);
-                end
-
-                cch_model.evict_block(tr.req_address);
-            end
-        endcase
-
-        case (tr.req_type)
-            LOAD: begin
+        // case (tr.req_type)
+        //     LOAD: begin
                 // FIXME use similar code to select a byte/half/word from the cacheline
                 /*
                 function uint32_t generate_expected_value(uint32_t block_address, bit[WORD_SELECT_SIZE-1:0] word_offset, bit[1:0] byte_offset);
@@ -96,9 +67,9 @@ class scoreboard extends uvm_scoreboard;
                 */
 
                 // tr.req_loaded_word = cch_model.read_cached_word(tr.req_address);
-            end
+            // end
 
-            STORE: begin
+            // STORE: begin
                 // FIXME use similar code to write a byte/half/word to the cacheline
                 /*
                 function void update_model_memory(uint32_t pipe_word_to_store, uint32_t block_address, bit[WORD_SELECT_SIZE-1:0] word_offset, bit[BYTE_SELECT_SIZE-1:0] byte_offset, memory_operation_size_e pipe_req_size);
@@ -125,13 +96,13 @@ class scoreboard extends uvm_scoreboard;
                     model_memory[word_address] = temp;
                 endfunction
                 */
-                tr.req_loaded_word = tr.req_store_word;
-            end
+        //         tr.req_loaded_word = tr.req_store_word;
+        //     end
 
-            CLFLUSH: begin
-                // Nothing to do...
-            end
-        endcase
+        //     CLFLUSH: begin
+        //         // Nothing to do...
+        //     end
+        // endcase
 
         case (tr.req_operation)
             LOAD: total_loads++;

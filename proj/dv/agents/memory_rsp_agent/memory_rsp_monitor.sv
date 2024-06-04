@@ -5,7 +5,7 @@ class memory_rsp_monitor extends uvm_monitor;
 
     virtual higher_memory_if rsp_vi;
 
-    memory_model mem_model;
+    main_memory dut_memory_model;
 
     function new(string name, uvm_component parent);
         super.new(name, parent);
@@ -19,12 +19,12 @@ class memory_rsp_monitor extends uvm_monitor;
             .field_name("memory_responder_if"),
             .value(rsp_vi)
         ));
-        assert(uvm_config_db #(memory_model)::get(
+        assert(uvm_config_db #(main_memory)::get(
             .cntxt(this),
             .inst_name(""),
-            .field_name("memory_model"),
-            .value(mem_model)
-        )) else `uvm_fatal(get_full_name(), "Couldn't get memory_model from config db")
+            .field_name("dut_memory_model"),
+            .value(dut_memory_model)
+        )) else `uvm_fatal(get_full_name(), "Couldn't get dut_memory_model from config db")
         mrsp_ap = new(.name("mrsp_ap"), .parent(this));
     endfunction
 
@@ -43,9 +43,9 @@ class memory_rsp_monitor extends uvm_monitor;
                 mem_tx.req_store_word = rsp_vi.req_store_word;
 
                 if (mem_tx.req_operation == STORE) begin
-                    mem_model.write(mem_tx.req_address, mem_tx.req_store_word);
+                    dut_memory_model.write(mem_tx.req_address, mem_tx.req_store_word);
                 end else if (mem_tx.req_operation == LOAD) begin
-                    mem_tx.req_loaded_word = mem_model.read(mem_tx.req_address);
+                    mem_tx.req_loaded_word = dut_memory_model.read(mem_tx.req_address);
                 end
 
                 mem_tx.t_issued = $time();

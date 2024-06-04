@@ -47,8 +47,8 @@ class cache_base_test extends uvm_test;
         `uvm_info("mem_seq", mem_seq.convert2string(), UVM_NONE)
         mem_seq.print();
         fork
-            mem_seq.start(mem_env.mem_agent.mem_seqr);        // Runs until complete
-            mem_rsp_seq.start(mem_env.hmem_agent.hmem_seqr); // Runs forever
+            mem_seq.start(mem_env.creq_agent.creq_seqr);     // Runs until complete
+            mem_rsp_seq.start(mem_env.mrsp_agent.mrsp_seqr); // Runs forever
         join_any
 
         phase.drop_objection(this);

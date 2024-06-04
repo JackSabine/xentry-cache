@@ -6,7 +6,7 @@ class environment extends uvm_env;
     reset_agent rst_agent;
     scoreboard sb;
 
-    memory_model mem_model;
+    main_memory dut_memory_model;
 
     function new (string name, uvm_component parent);
         super.new(name, parent);
@@ -14,12 +14,12 @@ class environment extends uvm_env;
 
     function void build_phase(uvm_phase phase);
         super.build_phase(phase);
-        mem_model = new;
-        uvm_config_db #(memory_model)::set(
+        dut_memory_model = new;
+        uvm_config_db #(main_memory)::set(
             .cntxt(this),
             .inst_name("*"),
-            .field_name("memory_model"),
-            .value(mem_model)
+            .field_name("dut_memory_model"),
+            .value(dut_memory_model)
         );
 
         creq_agent  = cache_req_agent::type_id::create(.name("creq_agent"), .parent(this));

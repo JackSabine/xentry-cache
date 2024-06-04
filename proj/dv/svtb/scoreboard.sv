@@ -10,8 +10,8 @@ class scoreboard extends uvm_scoreboard;
     uvm_tlm_fifo #(memory_transaction) expfifo;
     uvm_tlm_fifo #(memory_transaction) outfifo;
 
-    // memory_model mem_model;
-    // cache_model cch_model;
+    cache_wrapper cache_model;
+    cache_config dut_config;
 
     static uint32_t cache_miss_delay;
     static uint32_t cache_flush_delay;
@@ -26,13 +26,7 @@ class scoreboard extends uvm_scoreboard;
         aport_mon = new("aport_mon", this);
         expfifo   = new("expfifo", this);
         outfifo   = new("outfifo", this);
-
-        // assert(uvm_config_db #(memory_model)::get(
-        //     .cntxt(this),
-        //     .inst_name(""),
-        //     .field_name("memory_model"),
-        //     .value(mem_model)
-        // )) else `uvm_fatal(get_full_name(), "Couldn't get memory_model from config db")
+        cache_model = new(dut_config.cache_size, dut_config.line_size, dut_config.assoc);
     endfunction
 
     function new (string name, uvm_component parent);
@@ -40,74 +34,32 @@ class scoreboard extends uvm_scoreboard;
         total_loads = 0;
         total_stores = 0;
         total_clflushes = 0;
+
+        assert(uvm_config_db #(cache_config)::get(
+            .cntxt(null),
+            .inst_name("*"),
+            .field_name("cache_config"),
+            .value(dut_config)
+        )) else `uvm_fatal(get_full_name(), "Couldn't get cache_config from config db")
     endfunction
 
     function void write_drv(memory_transaction tr);
         // tr has t_issued
         // use to predict t_fulfilled
 
-        // case (tr.req_type)
-        //     LOAD: begin
-                // FIXME use similar code to select a byte/half/word from the cacheline
-                /*
-                function uint32_t generate_expected_value(uint32_t block_address, bit[WORD_SELECT_SIZE-1:0] word_offset, bit[1:0] byte_offset);
-                    uint32_t mask;
-                    uint32_t word_address;
-
-                    unique case (pipe_req_size)
-                        BYTE: mask = gen_bitmask(8);
-                        HALF: mask = gen_bitmask(16);
-                        WORD: mask = gen_bitmask(32);
-                    endcase
-
-                    word_address = gen_word_address(block_address, word_offset, '0);
-
-                    return (model_memory[word_address] >> (8 * byte_offset)) & mask;
-                endfunction
-                */
-
-                // tr.req_loaded_word = cch_model.read_cached_word(tr.req_address);
-            // end
-
-            // STORE: begin
-                // FIXME use similar code to write a byte/half/word to the cacheline
-                /*
-                function void update_model_memory(uint32_t pipe_word_to_store, uint32_t block_address, bit[WORD_SELECT_SIZE-1:0] word_offset, bit[BYTE_SELECT_SIZE-1:0] byte_offset, memory_operation_size_e pipe_req_size);
-                    uint32_t word_address;
-                    uint32_t mask;
-                    uint32_t temp;
-
-                    unique case (pipe_req_size)
-                        BYTE: mask = gen_bitmask(8);
-                        HALF: mask = gen_bitmask(16);
-                        WORD: mask = gen_bitmask(32);
-                    endcase
-
-                    word_address = gen_word_address(block_address, word_offset, '0);
-
-                    `ifdef DEBUG_PRINT
-                    $display("Performing a %0s store to word address 0x%08x (byte %02b) with value 0x%08x", pipe_req_size.name, word_address, byte_offset, pipe_word_to_store);
-                    `endif
-
-                    temp = model_memory[word_address];
-                    temp = temp & ~(mask << (8 * byte_offset));
-                    temp = temp | (pipe_word_to_store << (8 * byte_offset));
-
-                    model_memory[word_address] = temp;
-                endfunction
-                */
-        //         tr.req_loaded_word = tr.req_store_word;
-        //     end
-
-        //     CLFLUSH: begin
-        //         // Nothing to do...
-        //     end
-        // endcase
-
         case (tr.req_operation)
-            LOAD: total_loads++;
-            STORE: total_stores++;
-            CLFLUSH: total_clflushes++;
+            LOAD: begin
+                total_loads++;
+                tr.req_loaded_word = cache_model.read(tr.req_address);
+            end
+
+            STORE: begin
+                total_stores++;
+            end
+
+            CLFLUSH: begin
+                total_clflushes++;
+            end
         endcase
 
         `uvm_info("write_drv OUT ", tr.convert2string(), UVM_HIGH)

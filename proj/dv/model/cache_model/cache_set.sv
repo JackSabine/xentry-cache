@@ -8,7 +8,8 @@ class cache_set;
     } cache_block_t;
 
     local cache_block_t blocks[];
-    local uint32_t words_per_block;
+    local const uint8_t associativity;
+    local const uint32_t words_per_block;
 
     function new (uint8_t associativity, uint32_t words_per_block);
         this.blocks = new [associativity];
@@ -20,12 +21,13 @@ class cache_set;
             this.blocks[i].recency = i;
         end
 
+        this.associativity = associativity;
         this.words_per_block = words_per_block;
     endfunction
 
     local function uint8_t get_victim_way();
         foreach (this.blocks[i]) begin
-            if (this.blocks[i].recency == '1) begin
+            if (this.blocks[i].recency == (associativity - 1)) begin
                 return i;
             end
         end
@@ -84,7 +86,7 @@ class cache_set;
 
         victim_way = this.get_victim_way();
         this.blocks[victim_way].tag = tag;
-        this.blocks[victim_way].valid = 1'b0;
+        this.blocks[victim_way].valid = 1'b1;
     endfunction
 
     function bit is_cached(uint32_t tag);

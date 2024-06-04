@@ -22,6 +22,10 @@ class cache extends memory_element;
         this.words_per_block = block_size / 4;
 
         this.sets = new [num_sets];
+
+        foreach (this.sets[i]) begin
+            this.sets[i] = new(associativity, this.words_per_block);
+        end
     endfunction
 
     local function uint32_t get_set(uint32_t addr);
@@ -49,7 +53,7 @@ class cache extends memory_element;
         addr = (addr | tag) << num_set_bits;
         addr = (addr | set) << num_offset_bits;
         addr = (addr | ofs);
-        return addr; 
+        return addr;
     endfunction
 
     // Cache miss recovery
@@ -61,7 +65,7 @@ class cache extends memory_element;
         if (this.sets[set].is_victim_dirty()) begin
             for (int i = 0; i < this.words_per_block; i++) begin
                 this.lower_memory.write(
-                    this.construct_addr(this.sets[set].get_victim_tag(), set, i),
+                    this.construct_addr(this.sets[set].get_victim_tag(), set, 4*i),
                     this.sets[set].get_indexed_victim_word(i)
                 );
             end
@@ -91,6 +95,7 @@ class cache extends memory_element;
     virtual function uint32_t read(uint32_t addr);
         bit cache_hit;
         uint32_t set, tag, ofs;
+        uint32_t read_word;
 
         set = get_set(addr);
         tag = get_tag(addr);
@@ -102,7 +107,10 @@ class cache extends memory_element;
             this.handle_miss(tag, set);
         end
 
-        return this.sets[set].read_word(tag, ofs);
+        read_word = this.sets[set].read_word(tag, ofs);
+        `uvm_info("cache", $sformatf("cache::read(%H) is returning %H", addr, read_word), UVM_HIGH)
+
+        return read_word;
     endfunction
 
     // Top-level cache write

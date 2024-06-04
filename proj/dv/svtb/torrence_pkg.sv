@@ -4,8 +4,7 @@ package torrence_pkg;
     import uvm_pkg::*;
     import torrence_types::*;
 
-    `include "../model/memory_model.sv"
-    `include "../model/cache_model.sv"
+    `include "../model/cache_model/files.sv"
     `include "../configs/cache_config.sv"
 
     `include "memory_transaction.sv"

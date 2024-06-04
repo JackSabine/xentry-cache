@@ -14,4 +14,5 @@ package torrence_types;
     } memory_operation_e;
 
     typedef int unsigned uint32_t;
+    typedef byte uint8_t;
 endpackage

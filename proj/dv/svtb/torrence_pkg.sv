@@ -7,8 +7,8 @@ package torrence_pkg;
     `include "../model/cache_model/files.sv"
     `include "../configs/cache_config.sv"
 
-    `include "memory_transaction.sv"
-    `include "reset_transaction.sv"
+    `include "../seq/memory_transaction.sv"
+    `include "../seq/reset_transaction.sv"
 
     `include "../seq/one_memory_transaction_seq.sv"
     `include "../seq/repeated_memory_transaction_seq.sv"

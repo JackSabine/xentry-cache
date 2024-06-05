@@ -1,0 +1,2 @@
+${DV_ROOT}/svtb/torrence_pkg.sv
+${DV_ROOT}/svtb/tb_top.sv

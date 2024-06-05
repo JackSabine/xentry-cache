@@ -33,9 +33,9 @@ WORKDIR := $(PROJECT_ROOT)/work
 XVLOG_FLAGS := --sv --incr --include $(DV_ROOT)/svtb --include $(DV_ROOT)/tests
 XELAB_FLAGS := --timescale=1ns/1ps --override_timeprecision
 
-COMPILE_LIST += -f $(DV_ROOT)/svtb/file_list
+COMPILE_LIST += ${DV_ROOT}/svtb/torrence_types.sv
 COMPILE_LIST += -f $(RTL_ROOT)/file_list
-# COMPILE_LIST += -f $(DV_ROOT)/tests/file_list
+COMPILE_LIST += -f $(DV_ROOT)/file_list
 
 TB_TOP := tb_top
 

@@ -1,3 +1,4 @@
+${RTL_ROOT}/interfaces.sv
 // ${RTL_ROOT}/onehot0_to_binary.sv
 // ${RTL_ROOT}/dcache_datapath.sv
 // ${RTL_ROOT}/dcache_controller.sv

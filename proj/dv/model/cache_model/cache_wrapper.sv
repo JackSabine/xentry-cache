@@ -43,23 +43,28 @@ class cache_wrapper;
         return read_data;
     endfunction
 
-    function uint32_t read(uint32_t addr);
-        uint32_t read_data;
+    function cache_response_t read(uint32_t addr);
+        cache_response_t resp;
 
-        read_data = l1.read(addr);
-        `uvm_info("cache_wrapper", $sformatf("l1.read(%8H) returned %8H", addr, read_data), UVM_HIGH)
-        read_data = select_read_data(read_data, WORD, 0);
-        return read_data;
+        resp = l1.read(addr);
+        `uvm_info("cache_wrapper", $sformatf("l1.read(%8H) returned %8H (hit = %B)", addr, resp.req_word, resp.is_hit), UVM_HIGH)
+        resp.req_word = select_read_data(resp.req_word, WORD, 0);
+        return resp;
     endfunction
 
-    function uint32_t write(uint32_t addr, uint32_t data);
+    function cache_response_t write(uint32_t addr, uint32_t data);
+        cache_response_t read_resp, write_resp;
         uint32_t read_data, data_to_write;
 
-        read_data = l1.read(addr);
+        read_resp = l1.read(addr);
 
-        data_to_write = insert_write_data(read_data, data, WORD, 0);
+        data_to_write = insert_write_data(read_resp.req_word, data, WORD, 0);
 
-        l1.write(addr, data_to_write);
+        write_resp = l1.write(addr, data_to_write);
+
+        write_resp.is_hit = read_resp.is_hit; // write_resp will always hit because we already read, so check read_resp instead
+
+        return write_resp;
     endfunction
 
 endclass

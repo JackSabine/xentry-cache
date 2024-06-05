@@ -61,12 +61,18 @@ class cache extends memory_element;
     //  2. Fetch data from lower memory
     //  3. Install fetched block
     //
+    // Note: the higher cache already missed, so no need to track the response is_hit field
+    //
     local function void handle_miss(uint32_t tag, uint32_t set);
+        cache_response_t resp;
+
         if (this.sets[set].is_victim_dirty()) begin
             for (int i = 0; i < this.words_per_block; i++) begin
-                this.lower_memory.write(
-                    this.construct_addr(this.sets[set].get_victim_tag(), set, 4*i),
-                    this.sets[set].get_indexed_victim_word(i)
+                void'( // resp is not needed
+                    this.lower_memory.write(
+                        this.construct_addr(this.sets[set].get_victim_tag(), set, 4*i),
+                        this.sets[set].get_indexed_victim_word(i)
+                    )
                 );
             end
 
@@ -74,12 +80,11 @@ class cache extends memory_element;
         end
 
         for (int i = 0; i < this.words_per_block; i++) begin
-            this.sets[set].set_indexed_victim_word(
-                i,
-                this.lower_memory.read(
-                    this.construct_addr(tag, set, 4*i)
-                )
+            resp = this.lower_memory.read(
+                this.construct_addr(tag, set, 4*i)
             );
+
+            this.sets[set].set_indexed_victim_word(i, resp.req_word);
         end
 
         this.sets[set].install(tag);
@@ -92,25 +97,24 @@ class cache extends memory_element;
     //    b. If missed, handle it
     // 2. Perform the read and return the word
     //
-    virtual function uint32_t read(uint32_t addr);
-        bit cache_hit;
+    virtual function cache_response_t read(uint32_t addr);
+        cache_response_t resp;
         uint32_t set, tag, ofs;
-        uint32_t read_word;
 
         set = get_set(addr);
         tag = get_tag(addr);
         ofs = get_ofs(addr);
 
-        cache_hit = this.sets[set].is_cached(tag);
+        resp.is_hit = this.sets[set].is_cached(tag);
 
-        if (!cache_hit) begin
+        if (!resp.is_hit) begin
             this.handle_miss(tag, set);
         end
 
-        read_word = this.sets[set].read_word(tag, ofs);
-        `uvm_info("cache", $sformatf("cache::read(%H) is returning %H", addr, read_word), UVM_HIGH)
+        resp.req_word = this.sets[set].read_word(tag, ofs);
+        `uvm_info("cache", $sformatf("cache::read(%H) is returning %H", addr, resp.req_word), UVM_HIGH)
 
-        return read_word;
+        return resp;
     endfunction
 
     // Top-level cache write
@@ -118,20 +122,24 @@ class cache extends memory_element;
     //    b. If missed, handle it
     // 2. Perform the write
     //
-    virtual function void write(uint32_t addr, uint32_t data);
-        bit cache_hit;
+    virtual function cache_response_t write(uint32_t addr, uint32_t data);
+        cache_response_t resp;
         uint32_t set, tag, ofs;
 
         set = get_set(addr);
         tag = get_tag(addr);
         ofs = get_ofs(addr);
 
-        cache_hit = this.sets[set].is_cached(tag);
+        resp.is_hit = this.sets[set].is_cached(tag);
 
-        if (!cache_hit) begin
+        if (!resp.is_hit) begin
             this.handle_miss(tag, set);
         end
 
+        resp.req_word = this.sets[set].read_word(tag, ofs);
+
         this.sets[set].write_word(tag, ofs, data);
+
+        return resp;
     endfunction
 endclass

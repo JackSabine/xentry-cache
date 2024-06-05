@@ -43,9 +43,9 @@ class memory_rsp_monitor extends uvm_monitor;
                 mem_tx.req_store_word = rsp_vi.req_store_word;
 
                 if (mem_tx.req_operation == STORE) begin
-                    dut_memory_model.write(mem_tx.req_address, mem_tx.req_store_word);
+                    void'(dut_memory_model.write(mem_tx.req_address, mem_tx.req_store_word));
                 end else if (mem_tx.req_operation == LOAD) begin
-                    mem_tx.req_loaded_word = dut_memory_model.read(mem_tx.req_address);
+                    mem_tx.req_loaded_word = dut_memory_model.read(mem_tx.req_address).req_word;
                 end
 
                 mem_tx.t_issued = $time();

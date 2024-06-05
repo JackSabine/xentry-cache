@@ -47,14 +47,17 @@ class scoreboard extends uvm_scoreboard;
         // tr has t_issued
         // use to predict t_fulfilled
 
+        cache_response_t resp;
+
         case (tr.req_operation)
             LOAD: begin
                 total_loads++;
-                tr.req_loaded_word = cache_model.read(tr.req_address);
+                resp = cache_model.read(tr.req_address);
             end
 
             STORE: begin
                 total_stores++;
+                resp = cache_model.write(tr.req_address, tr.req_store_word);
             end
 
             CLFLUSH: begin

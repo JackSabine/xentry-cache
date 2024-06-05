@@ -1,3 +1,4 @@
+`include "cache_model_types.sv"
 `include "memory_element.sv"
 `include "main_memory.sv"
 `include "cache_set.sv"

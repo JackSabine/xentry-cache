@@ -10,6 +10,7 @@ class memory_transaction extends uvm_sequence_item;
 
     time t_issued;
     time t_fulfilled;
+    logic expect_hit;
 
     constraint operation {
         req_operation != MO_UNKNOWN;
@@ -36,8 +37,8 @@ class memory_transaction extends uvm_sequence_item;
     function string convert2string();
         string s;
         s = $sformatf(
-            "addr=%8h | op = %5s | size = %s | store_word = %8h | loaded_word = %8h",
-            req_address, req_operation.name(), req_size.name(), req_store_word, req_loaded_word
+            "addr=%8h | op = %5s | size = %s | store_word = %8h | loaded_word = %8h | t_issued = %5d | t_fulfilled = %5d | expect_hit = %b",
+            req_address, req_operation.name(), req_size.name(), req_store_word, req_loaded_word, t_issued, t_fulfilled, expect_hit
         );
         return s;
     endfunction
@@ -48,7 +49,9 @@ class memory_transaction extends uvm_sequence_item;
         `uvm_field_int(req_address,     UVM_ALL_ON | UVM_HEX)
         `uvm_field_int(req_store_word,  UVM_ALL_ON | UVM_HEX)
         `uvm_field_int(req_loaded_word, UVM_ALL_ON | UVM_HEX)
-        // TODO add uvm_field_time?
+        `uvm_field_int(t_issued,        UVM_ALL_ON | UVM_DEC) // Should be same
+        `uvm_field_int(t_fulfilled,     UVM_ALL_ON | UVM_DEC | UVM_NOCOMPARE) // Can be x if scoreboard cannot predict finish time
+        `uvm_field_int(expect_hit,      UVM_ALL_ON | UVM_BIN | UVM_NOCOMPARE) // Not populated by monitor
     `uvm_object_utils_end
 endclass
 

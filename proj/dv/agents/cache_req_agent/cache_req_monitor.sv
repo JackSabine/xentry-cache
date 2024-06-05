@@ -33,6 +33,7 @@ class cache_req_monitor extends uvm_monitor;
                 mem_tx.req_operation  = memory_operation_e'(req_vi.req_operation);
                 mem_tx.req_size       = memory_operation_size_e'(req_vi.req_size);
                 mem_tx.req_store_word = req_vi.req_store_word;
+                mem_tx.t_issued = $time();
 
                 `uvm_info(get_full_name(), "req_valid seen, awaiting req_fulfilled", UVM_DEBUG)
 

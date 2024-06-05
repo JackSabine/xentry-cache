@@ -58,7 +58,7 @@ class repeated_memory_transaction_seq extends uvm_sequence #(memory_transaction)
                     mem_tx.req_address inside {[block_address : block_address + offset_mask]};
                 }
             ) else `uvm_fatal(get_full_name(), "Couldn't successfully randomize mem_tx")
-            mem_tx.print();
+            `uvm_info(get_full_name(), mem_tx.sprint(), UVM_MEDIUM)
             finish_item(mem_tx);
         end
     endtask

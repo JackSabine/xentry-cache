@@ -65,33 +65,53 @@ class scoreboard extends uvm_scoreboard;
             end
         endcase
 
+        case (tr.req_operation) inside
+            LOAD, STORE: begin
+                tr.req_loaded_word = resp.req_word;
+                tr.expect_hit = resp.is_hit;
+                if (tr.expect_hit) begin
+                    tr.t_fulfilled = tr.t_issued;
+                end
+            end
+        endcase
+
+        tr.t_issued += 2 * 10; // FIXME
+        tr.t_fulfilled += 2 * 10;
+
         `uvm_info("write_drv OUT ", tr.convert2string(), UVM_HIGH)
         void'(expfifo.try_put(tr));
     endfunction
 
     function void write_mon(memory_transaction tr);
-        // tr has t_fulfilled
+        // tr has t_issued and t_fulfilled
         `uvm_info("write_mon OUT ", tr.convert2string(), UVM_HIGH)
         void'(outfifo.try_put(tr));
     endfunction
 
     task run_phase(uvm_phase phase);
         memory_transaction exp_tr, out_tr;
+        bit pass;
+
         forever begin
             `uvm_info("scoreboard run task", "WAITING for expected output", UVM_DEBUG)
             expfifo.get(exp_tr);
             `uvm_info("scoreboard run task", "WAITING for actual output", UVM_DEBUG)
             outfifo.get(out_tr);
-            if (out_tr.compare(exp_tr)) begin
+
+            pass = out_tr.compare(exp_tr);
+
+            if (exp_tr.expect_hit) pass &= out_tr.t_issued == out_tr.t_fulfilled;
+            else                   pass &= out_tr.t_issued != out_tr.t_fulfilled;
+
+            if (pass) begin
                 PASS();
                 `uvm_info (
                     "PASS ",
-                    $sformatf(
-                        {
-                            "\n** Actual  =%s",
-                            "\n** Expected=%s"
+                    $sformatf({
+                        "\n\n<<<<< Observed  >>>>>\n%s",
+                          "\n<<<<< Predicted >>>>>\n%s\n"
                         },
-                        out_tr.convert2string(), exp_tr.convert2string()
+                        out_tr.sprint(), exp_tr.sprint()
                     ),
                     UVM_HIGH
                 )
@@ -99,12 +119,11 @@ class scoreboard extends uvm_scoreboard;
                 ERROR();
                 `uvm_error(
                     "ERROR",
-                    $sformatf(
-                        {
-                            "\n** Actual  =%s",
-                            "\n** Expected=%s"
+                    $sformatf({
+                        "\n\n<<<<< Observed  >>>>>\n%s",
+                          "\n<<<<< Predicted >>>>>\n%s\n"
                         },
-                        out_tr.convert2string(), exp_tr.convert2string()
+                        out_tr.sprint(), exp_tr.sprint()
                     )
                 )
             end

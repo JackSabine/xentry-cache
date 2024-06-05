@@ -15,6 +15,7 @@
 # | * project.sh
 
 .ONESHELL:
+.SHELLFLAGS = -ec
 
 .DEFAULT_GOAL := sim
 

@@ -6,6 +6,7 @@ package torrence_pkg;
 
     `include "../model/cache_model/files.sv"
     `include "../configs/cache_config.sv"
+    `include "../configs/clock_config.sv"
 
     `include "../seq/memory_transaction.sv"
     `include "../seq/reset_transaction.sv"

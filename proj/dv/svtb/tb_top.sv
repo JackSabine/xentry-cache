@@ -7,7 +7,9 @@ module tb_top;
     parameter XLEN = 32;
 
     cache_config dut_config;
+    clock_config clk_config;
 
+    bit clk_enabled = 1'b0;
     logic clk = 1'b0;
     cache_if req_if(clk);
     higher_memory_if rsp_if(clk);
@@ -34,12 +36,26 @@ module tb_top;
         .l2_req_fulfilled(rsp_if.req_fulfilled)
     );
 
-    always #10 clk = !clk;
+    initial begin
+        @(posedge clk_enabled);
+
+        forever begin
+            clk = 1'b1;
+            #(clk_config.t_high);
+            clk = 1'b0;
+            #(clk_config.t_low);
+        end
+    end
 
     initial begin
         dut_config = cache_config::type_id::create("dut_config");
         dut_config.set(LINE_SIZE, CACHE_SIZE, 1);
         dut_config.print();
+
+        clk_config = clock_config::type_id::create("clk_config");
+        assert(clk_config.randomize()) else `uvm_fatal("tb_top", "Could not randomize clk_config")
+        `uvm_info("tb_top", clk_config.sprint(), UVM_LOW)
+        clk_enabled = 1'b1;
 
         uvm_config_db #(virtual cache_if)::set(
             .cntxt(null),
@@ -64,6 +80,12 @@ module tb_top;
             .inst_name("*"),
             .field_name("cache_config"),
             .value(dut_config)
+        );
+        uvm_config_db #(clock_config)::set(
+            .cntxt(null),
+            .inst_name("*"),
+            .field_name("clock_config"),
+            .value(clk_config)
         );
         run_test();
     end

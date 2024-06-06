@@ -12,6 +12,7 @@ class scoreboard extends uvm_scoreboard;
 
     cache_wrapper cache_model;
     cache_config dut_config;
+    clock_config clk_config;
 
     static uint32_t cache_miss_delay;
     static uint32_t cache_flush_delay;
@@ -41,6 +42,13 @@ class scoreboard extends uvm_scoreboard;
             .field_name("cache_config"),
             .value(dut_config)
         )) else `uvm_fatal(get_full_name(), "Couldn't get cache_config from config db")
+
+        assert(uvm_config_db #(clock_config)::get(
+            .cntxt(null),
+            .inst_name("*"),
+            .field_name("clock_config"),
+            .value(clk_config)
+        )) else `uvm_fatal(get_full_name(), "Couldn't get clock_config from config db")
     endfunction
 
     function void write_drv(memory_transaction tr);
@@ -75,8 +83,8 @@ class scoreboard extends uvm_scoreboard;
             end
         endcase
 
-        tr.t_issued += 2 * 10; // FIXME
-        tr.t_fulfilled += 2 * 10;
+        tr.t_issued    += clk_config.t_period;
+        tr.t_fulfilled += clk_config.t_period;
 
         `uvm_info("write_drv OUT ", tr.convert2string(), UVM_HIGH)
         void'(expfifo.try_put(tr));

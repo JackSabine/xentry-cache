@@ -23,7 +23,6 @@ ifndef PROJECT_ROOT
   $(error You must define the project root by sourcing project.sh)
 endif
 
-UVM_HOME    := $(HOME)/Documents/uvm-1.2/
 LIB_DPI = mydpi
 
 UVM_XVLOG_FLAGS := -L uvm

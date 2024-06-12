@@ -24,6 +24,7 @@ ifndef PROJECT_ROOT
 endif
 
 UVM_HOME    := $(HOME)/Documents/uvm-1.2/
+LIB_DPI = mydpi
 
 UVM_XVLOG_FLAGS := -L uvm
 UVM_XELAB_FLAGS := -L uvm
@@ -31,7 +32,7 @@ UVM_XSIM_FLAGS  := -testplusarg UVM_TESTNAME=$(t) -testplusarg UVM_VERBOSITY=UVM
 
 WORKDIR := $(PROJECT_ROOT)/work
 XVLOG_FLAGS := --sv --incr --include $(DV_ROOT)/svtb --include $(DV_ROOT)/tests
-XELAB_FLAGS := --timescale=1ns/1ps --override_timeprecision
+XELAB_FLAGS := --timescale=1ns/1ps --override_timeprecision -sv_lib ${LIB_DPI}
 
 COMPILE_LIST += ${DV_ROOT}/svtb/torrence_types.sv
 COMPILE_LIST += -f $(RTL_ROOT)/file_list
@@ -42,9 +43,16 @@ TB_TOP := tb_top
 RANDOM_NUMBER = $(shell shuf -i 0-4294967296 -n 1)
 s = $(RANDOM_NUMBER)
 
+
+.PHONY: cmodels
+cmodels:
+	xsc -o ${WORKDIR}/${LIB_DPI}.so \
+		-f ${DV_DPI_C}/file_list \
+		--gcc_compile_options "-I/usr/include/x86_64-linux-gnu" --gcc_compile_options "-L/usr/lib/x86_64-linux-gnu"
+
 # (c)ompile (o)nly
 .PHONY: co
-co: | work
+co: cmodels | work
 	cd $(WORKDIR)
 	xvlog $(UVM_XVLOG_FLAGS) $(COMPILE_LIST) $(XVLOG_FLAGS)
 	xelab -top $(TB_TOP) -snapshot $(TB_TOP)_snapshot -debug all $(UVM_XELAB_FLAGS) $(XELAB_FLAGS)

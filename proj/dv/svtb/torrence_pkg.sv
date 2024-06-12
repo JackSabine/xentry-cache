@@ -4,6 +4,8 @@ package torrence_pkg;
     import uvm_pkg::*;
     import torrence_types::*;
 
+    `include "dpi-c.sv"
+
     `include "../model/cache_model/files.sv"
     `include "../configs/cache_config.sv"
     `include "../configs/clock_config.sv"

@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "*.o": "asm-intel-x86-generic",
+        "file_list": "verilog-filelist",
+        "svdpi.h": "c"
+    }
+}

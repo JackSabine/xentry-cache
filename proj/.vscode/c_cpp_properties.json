@@ -1,0 +1,16 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "/opt/Xilinx/Vivado/2022.2/data/xsim/include"
+            ],
+            "defines": ["__linux"],
+            "compilerPath": "/opt/Xilinx/Vivado/2022.2/bin/xsc",
+            "cStandard": "gnu17",
+            "cppStandard": "gnu++17",
+            "intelliSenseMode": "linux-gcc-x64"
+        }
+    ],
+    "version": 4
+}

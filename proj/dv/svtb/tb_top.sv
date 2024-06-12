@@ -53,7 +53,12 @@ module tb_top;
         dut_config.print();
 
         clk_config = clock_config::type_id::create("clk_config");
-        assert(clk_config.randomize()) else `uvm_fatal("tb_top", "Could not randomize clk_config")
+        assert(
+            clk_config.randomize() with {
+                t_period == 2;
+                duty_cycle == 50;
+            }
+        ) else `uvm_fatal("tb_top", "Could not randomize clk_config")
         `uvm_info("tb_top", clk_config.sprint(), UVM_LOW)
         clk_enabled = 1'b1;
 

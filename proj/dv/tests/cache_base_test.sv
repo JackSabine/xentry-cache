@@ -36,14 +36,14 @@ class cache_base_test extends uvm_test;
     endtask
 
     task main_phase(uvm_phase phase);
-        repeated_memory_transaction_seq mem_seq;
+        trace_based_memory_seq mem_seq;
         memory_response_seq mem_rsp_seq;
 
         phase.raise_objection(this);
 
-        mem_seq = repeated_memory_transaction_seq::type_id::create(.name("mem_seq"));
+        mem_seq = trace_based_memory_seq::type_id::create(.name("mem_seq"));
         mem_rsp_seq = memory_response_seq::type_id::create(.name("mem_rsp_seq"));
-        assert(mem_seq.randomize() with { mem_seq.num_transactions == 4; }) else `uvm_fatal(get_full_name(), "Couldn't randomize mem_seq")
+        assert(mem_seq.randomize()) else `uvm_fatal(get_full_name(), "Couldn't randomize mem_seq")
         `uvm_info("mem_seq", mem_seq.convert2string(), UVM_NONE)
         mem_seq.print();
         fork

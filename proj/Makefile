@@ -45,7 +45,8 @@ s = $(RANDOM_NUMBER)
 
 
 .PHONY: cmodels
-cmodels:
+cmodels: | work
+	cd $(WORKDIR)
 	xsc -o ${WORKDIR}/${LIB_DPI}.so \
 		-f ${DV_DPI_C}/file_list \
 		--gcc_compile_options "-I/usr/include/x86_64-linux-gnu" --gcc_compile_options "-L/usr/lib/x86_64-linux-gnu"

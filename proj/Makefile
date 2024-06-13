@@ -27,7 +27,8 @@ LIB_DPI = mydpi
 
 UVM_XVLOG_FLAGS := -L uvm
 UVM_XELAB_FLAGS := -L uvm
-UVM_XSIM_FLAGS  := -testplusarg UVM_TESTNAME=$(t) -testplusarg UVM_VERBOSITY=UVM_LOW
+v = UVM_LOW
+UVM_XSIM_FLAGS  := -testplusarg UVM_TESTNAME=$(t) -testplusarg UVM_VERBOSITY=$(v)
 
 WORKDIR := $(PROJECT_ROOT)/work
 XVLOG_FLAGS := --sv --incr --include $(DV_ROOT)/svtb --include $(DV_ROOT)/tests
@@ -87,4 +88,5 @@ help:
 	@echo "* so - sim only (xsim)"
 	@echo "  * s=<seed_override>"
 	@echo "  * t=<test_name>"
+	@echo "  * v=UVM_<verbosity, NONE/LOW/MEDIUM/HIGH/DEBUG>"
 	@echo "* waves - show most recent simulation in waveform"

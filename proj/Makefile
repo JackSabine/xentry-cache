@@ -46,41 +46,50 @@ s = $(RANDOM_NUMBER)
 
 .PHONY: cmodels
 cmodels: | work
-	cd $(WORKDIR)
-	xsc -o ${WORKDIR}/${LIB_DPI}.so \
+	@cd $(WORKDIR)
+	@echo "----- Compiling DPI-C -----"
+	@xsc -o ${WORKDIR}/${LIB_DPI}.so \
 		-f ${DV_DPI_C}/file_list \
 		--gcc_compile_options "-I/usr/include/x86_64-linux-gnu" --gcc_compile_options "-L/usr/lib/x86_64-linux-gnu"
 
 # (c)ompile (o)nly
 .PHONY: co
 co: cmodels | work
-	cd $(WORKDIR)
-	xvlog $(UVM_XVLOG_FLAGS) $(COMPILE_LIST) $(XVLOG_FLAGS)
-	xelab -top $(TB_TOP) -snapshot $(TB_TOP)_snapshot -debug all $(UVM_XELAB_FLAGS) $(XELAB_FLAGS)
+	@cd $(WORKDIR)
+	@echo "----- Compiling HDL -----"
+	@xvlog $(UVM_XVLOG_FLAGS) $(COMPILE_LIST) $(XVLOG_FLAGS)
+	@echo "----- Elaborating HDL -----"
+	@xelab -top $(TB_TOP) -snapshot $(TB_TOP)_snapshot -debug all $(UVM_XELAB_FLAGS) $(XELAB_FLAGS)
 
 # (s)im (o)nly
 .PHONY: so
 so: | work
-	cd $(WORKDIR)
-	xsim $(TB_TOP)_snapshot -tclbatch $(PROJECT_ROOT)/xsim_cfg.tcl --sv_seed $(s) $(UVM_XSIM_FLAGS)
+	@if [ -n "$$t" ]; then
+		@echo "----- Running simulation -----"
+		cd $(WORKDIR)
+		xsim $(TB_TOP)_snapshot -tclbatch $(PROJECT_ROOT)/xsim_cfg.tcl --sv_seed $(s) $(UVM_XSIM_FLAGS)
+	@else
+		@echo "UVM_TESTNAME is unset during 'so' step, specify with t=..."
+	@fi
 
 .PHONY: sim
 sim: co so
 
 .PHONY: waves
 waves: | work
-	if [ -f $(TB_TOP)_snapshot.wcfg ]; then
-		cp $(TB_TOP)_snapshot.wcfg $(WORKDIR)
-	fi
-	cd $(WORKDIR)
-	xsim -autoloadwcfg --gui $(TB_TOP)_snapshot.wdb &
+	@echo "----- Opening waves -----"
+	@if [ -f $(TB_TOP)_snapshot.wcfg ]; then
+		@cp $(TB_TOP)_snapshot.wcfg $(WORKDIR)
+	@fi
+	@cd $(WORKDIR)
+	@xsim -autoloadwcfg --gui $(TB_TOP)_snapshot.wdb &
 
 work:
-	mkdir $(WORKDIR)
+	@mkdir $(WORKDIR)
 
 .PHONY: clean
 clean:
-	rm -rf $(WORKDIR)
+	@rm -rf $(WORKDIR)
 
 .PHONY: help
 help:

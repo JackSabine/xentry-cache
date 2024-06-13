@@ -44,6 +44,11 @@ class trace_based_memory_seq extends uvm_sequence #(memory_transaction);
         super.new(name);
     endfunction
 
+    virtual function uint32_t mask_address(uint32_t address);
+        // default allows for all byte index combinations
+        return address;
+    endfunction
+
     task body();
         memory_transaction mem_tx;
         uint32_t i, address;
@@ -61,12 +66,15 @@ class trace_based_memory_seq extends uvm_sequence #(memory_transaction);
 
         repeat(num_trace_lines_to_skip) begin
             if ($feof(fd)) break;
-            $fgets(tmp, fd);
+            rd_code = $fgets(tmp, fd);
+            if (rd_code == 0) break;
         end
 
         i = 0;
         while (i++ < num_transactions && !$feof(fd)) begin
             rd_code = $fscanf(fd, "%x\n", address);
+
+            address = mask_address(address);
 
             if (rd_code == 1) begin
                 mem_tx = memory_transaction::type_id::create(.name("mem_tx"), .contxt(get_full_name()));
@@ -75,7 +83,7 @@ class trace_based_memory_seq extends uvm_sequence #(memory_transaction);
                     mem_tx.randomize() with {
                         mem_tx.req_address == address;
                     }
-                ) else `uvm_fatal(get_type_name(), "Couldn't successfully randomize mem_tx")
+                ) else `uvm_fatal(get_type_name(), $sformatf("Couldn't randomize mem_tx #%0d for line %0d", i, i + num_trace_lines_to_skip))
                 `uvm_info(get_type_name(), $sformatf("Address transaction #%0d from line %0d:\n%s", i, i + num_trace_lines_to_skip, mem_tx.sprint()), UVM_MEDIUM)
                 finish_item(mem_tx);
             end else if (rd_code == -1) begin

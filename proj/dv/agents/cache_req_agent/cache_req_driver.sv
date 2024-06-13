@@ -43,11 +43,9 @@ class cache_req_driver extends uvm_driver #(memory_transaction);
             mem_tx.t_issued = $time();
             creq_ap.write(mem_tx);
 
-            if (req_vi.req_fulfilled) begin
+            do begin
                 @(posedge req_vi.clk);
-            end else while (!req_vi.req_fulfilled) begin
-                @(posedge req_vi.clk);
-            end
+            end while (!req_vi.req_fulfilled);
 
             seq_item_port.item_done();
         end

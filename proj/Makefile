@@ -23,43 +23,77 @@ ifndef PROJECT_ROOT
   $(error You must define the project root by sourcing project.sh)
 endif
 
-LIB_DPI = mydpi
+WORK := work
+
+WORKDIR := $(PROJECT_ROOT)/$(WORK)
+
+##################################
+CC := xsc
+
+INC := -I/usr/include/x86_64-linux-gnu
+LIB := -L/usr/lib/x86_64-linux-gnu
+CFLAGS := $(addprefix --gcc_compile_options ",$(addsuffix ",$(INC))) $(addprefix --gcc_compile_options ",$(addsuffix ",$(LIB)))
+
+
+# Modules/filenames here
+DPIC_SOURCES := get_environment_variable
+
+# Auto-generate shared object paths
+DPIC_SHARED_OBJECTS := $(addsuffix .so,$(addprefix $(WORKDIR)/,$(DPIC_SOURCES)))
+
+# Auto-generate shared object arg for XELAB
+DPIC_SV_LIB_FLAGS := $(addprefix -sv_lib ,$(DPIC_SOURCES))
+##################################
 
 UVM_XVLOG_FLAGS := -L uvm
 UVM_XELAB_FLAGS := -L uvm
 v = UVM_LOW
 UVM_XSIM_FLAGS  := -testplusarg UVM_TESTNAME=$(t) -testplusarg UVM_VERBOSITY=$(v)
 
-WORKDIR := $(PROJECT_ROOT)/work
 XVLOG_FLAGS := --sv --incr --include $(DV_ROOT)/svtb --include $(DV_ROOT)/tests
-XELAB_FLAGS := --timescale=1ns/1ps --override_timeprecision -sv_lib ${LIB_DPI}
+XELAB_FLAGS := --timescale=1ns/1ps --override_timeprecision ${DPIC_SV_LIB_FLAGS}
+
+include $(RTL_ROOT)/file_list.mk
+include $(DV_ROOT)/file_list.mk
+
+SRC_FILES_RTL_ABS_PATH := $(addprefix $(RTL_ROOT)/,$(SRC_FILES_RTL))
+SRC_FILES_DV_ABS_PATH := $(addprefix $(DV_ROOT)/,$(SRC_FILES_DV))
 
 COMPILE_LIST += ${DV_ROOT}/svtb/torrence_types.sv
-COMPILE_LIST += -f $(RTL_ROOT)/file_list
-COMPILE_LIST += -f $(DV_ROOT)/file_list
+COMPILE_LIST += $(SRC_FILES_RTL_ABS_PATH)
+COMPILE_LIST += $(SRC_FILES_DV_ABS_PATH)
 
 TB_TOP := tb_top
 
 RANDOM_NUMBER = $(shell shuf -i 0-4294967296 -n 1)
 s = $(RANDOM_NUMBER)
 
+SYMBOL := symbol
+# Need to make files findable and output in $(WORKDIR):
+# https://stackoverflow.com/questions/834748/gcc-makefile-error-no-rule-to-make-target
+SYMBOL_LIST := $(addsuffix .symbol,$(COMPILE_LIST))
 
-.PHONY: cmodels
-cmodels: | work
-	@cd $(WORKDIR)
-	@echo "----- Compiling DPI-C -----"
-	@xsc -o ${WORKDIR}/${LIB_DPI}.so \
-		-f ${DV_DPI_C}/file_list \
-		--gcc_compile_options "-I/usr/include/x86_64-linux-gnu" --gcc_compile_options "-L/usr/lib/x86_64-linux-gnu"
+$(WORKDIR)/%.so: $(DV_DPI_C)/%.c | work
+	cd $(WORKDIR)
+	$(CC) $< -o $@ $(CFLAGS)
+
+%.$(SYMBOL): % | work
+	touch $@
+
+$(WORKDIR)/xsim.dir/$(WORK)/$(WORK).rlx: $(SYMBOL_LIST) | work
+	@echo "----- Compiling HDL -----"
+	cd $(WORKDIR)
+	xvlog $(UVM_XVLOG_FLAGS) $(COMPILE_LIST) $(XVLOG_FLAGS)
+
+$(WORKDIR)/xsim.dir/$(TB_TOP)_snapshot/xsimk: $(WORKDIR)/xsim.dir/$(WORK)/$(WORK).rlx
+	@echo "----- Elaborating HDL -----"
+	cd $(WORKDIR)
+	xelab -top $(TB_TOP) -snapshot $(TB_TOP)_snapshot -debug all $(UVM_XELAB_FLAGS) $(XELAB_FLAGS)
 
 # (c)ompile (o)nly
 .PHONY: co
-co: cmodels | work
-	@cd $(WORKDIR)
-	@echo "----- Compiling HDL -----"
-	@xvlog $(UVM_XVLOG_FLAGS) $(COMPILE_LIST) $(XVLOG_FLAGS)
-	@echo "----- Elaborating HDL -----"
-	@xelab -top $(TB_TOP) -snapshot $(TB_TOP)_snapshot -debug all $(UVM_XELAB_FLAGS) $(XELAB_FLAGS)
+co: $(DPIC_SHARED_OBJECTS) $(WORKDIR)/xsim.dir/$(TB_TOP)_snapshot/xsimk
+	@echo "----- Compilation complete -----"
 
 # (s)im (o)nly
 .PHONY: so

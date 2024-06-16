@@ -68,31 +68,23 @@ TB_TOP := tb_top
 RANDOM_NUMBER = $(shell shuf -i 0-4294967296 -n 1)
 s = $(RANDOM_NUMBER)
 
-SYMBOL := symbol
-# Need to make files findable and output in $(WORKDIR):
-# https://stackoverflow.com/questions/834748/gcc-makefile-error-no-rule-to-make-target
-SYMBOL_LIST := $(addsuffix .symbol,$(COMPILE_LIST))
-
 $(WORKDIR)/%.so: $(DV_DPI_C)/%.c | work
 	cd $(WORKDIR)
 	$(CC) $< -o $@ $(CFLAGS)
 
-%.$(SYMBOL): % | work
-	touch $@
-
-$(WORKDIR)/xsim.dir/$(WORK)/$(WORK).rlx: $(SYMBOL_LIST) | work
+$(WORKDIR)/xsim.dir/$(WORK)/$(WORK).rlx: $(COMPILE_LIST) | work
 	@echo "----- Compiling HDL -----"
 	cd $(WORKDIR)
-	xvlog $(UVM_XVLOG_FLAGS) $(COMPILE_LIST) $(XVLOG_FLAGS)
+	xvlog $(UVM_XVLOG_FLAGS) $^ $(XVLOG_FLAGS)
 
-$(WORKDIR)/xsim.dir/$(TB_TOP)_snapshot/xsimk: $(WORKDIR)/xsim.dir/$(WORK)/$(WORK).rlx
+$(WORKDIR)/xsim.dir/$(TB_TOP)_snapshot/xsimk: $(DPIC_SHARED_OBJECTS) $(WORKDIR)/xsim.dir/$(WORK)/$(WORK).rlx
 	@echo "----- Elaborating HDL -----"
 	cd $(WORKDIR)
 	xelab -top $(TB_TOP) -snapshot $(TB_TOP)_snapshot -debug all $(UVM_XELAB_FLAGS) $(XELAB_FLAGS)
 
 # (c)ompile (o)nly
 .PHONY: co
-co: $(DPIC_SHARED_OBJECTS) $(WORKDIR)/xsim.dir/$(TB_TOP)_snapshot/xsimk
+co: $(WORKDIR)/xsim.dir/$(TB_TOP)_snapshot/xsimk
 	@echo "----- Compilation complete -----"
 
 # (s)im (o)nly

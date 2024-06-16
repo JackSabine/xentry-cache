@@ -14,9 +14,6 @@
 # | * Makefile (this file!)
 # | * project.sh
 
-.ONESHELL:
-.SHELLFLAGS = -ec
-
 .DEFAULT_GOAL := sim
 
 ifndef PROJECT_ROOT
@@ -87,18 +84,15 @@ COMPILE_LIST += $(SRC_FILES_DV_ABS_PATH)
 
 $(WORKDIR)/%.so: $(DV_DPI_C)/%.c | work
 	@echo "----- Compiling DPI-C -----"
-	cd $(WORKDIR)
-	$(CC) $< -o $@ $(CFLAGS)
+	cd $(WORKDIR) && $(CC) $< -o $@ $(CFLAGS)
 
 $(WORKDIR)/xsim.dir/$(WORK)/$(WORK).rlx: $(COMPILE_LIST) | work
 	@echo "----- Compiling HDL -----"
-	cd $(WORKDIR)
-	xvlog $(UVM_XVLOG_FLAGS) $^ $(XVLOG_FLAGS)
+	cd $(WORKDIR) && xvlog $(UVM_XVLOG_FLAGS) $^ $(XVLOG_FLAGS)
 
 $(WORKDIR)/xsim.dir/$(TB_TOP)_snapshot/xsimk: $(DPIC_SHARED_OBJECTS) $(WORKDIR)/xsim.dir/$(WORK)/$(WORK).rlx
 	@echo "----- Elaborating HDL -----"
-	cd $(WORKDIR)
-	xelab -top $(TB_TOP) -snapshot $(TB_TOP)_snapshot -debug all $(UVM_XELAB_FLAGS) $(XELAB_FLAGS)
+	cd $(WORKDIR) && xelab -top $(TB_TOP) -snapshot $(TB_TOP)_snapshot -debug all $(UVM_XELAB_FLAGS) $(XELAB_FLAGS)
 
 # (c)ompile (o)nly
 .PHONY: co
@@ -108,13 +102,12 @@ co: $(WORKDIR)/xsim.dir/$(TB_TOP)_snapshot/xsimk
 # (s)im (o)nly
 .PHONY: so
 so: | work
-	@if [ -n "$$t" ]; then
-		@echo "----- Running simulation -----"
-		cd $(WORKDIR)
-		xsim $(TB_TOP)_snapshot -tclbatch $(PROJECT_ROOT)/xsim_cfg.tcl --sv_seed $(s) $(UVM_XSIM_FLAGS)
-	@else
-		@echo "UVM_TESTNAME is unset during 'so' step, specify with t=..."
-	@fi
+	@echo "----- Running simulation -----"
+	@if [ ! -n "$$t" ]; then \
+		echo "UVM_TESTNAME is unset during 'so' step, specify with t=..."; \
+		exit 9; \
+	fi
+	cd $(WORKDIR) && xsim $(TB_TOP)_snapshot -tclbatch $(PROJECT_ROOT)/xsim_cfg.tcl --sv_seed $(s) $(UVM_XSIM_FLAGS); \
 
 .PHONY: sim
 sim: co so
@@ -122,11 +115,10 @@ sim: co so
 .PHONY: waves
 waves: | work
 	@echo "----- Opening waves -----"
-	@if [ -f $(TB_TOP)_snapshot.wcfg ]; then
-		@cp $(TB_TOP)_snapshot.wcfg $(WORKDIR)
-	@fi
-	@cd $(WORKDIR)
-	@xsim -autoloadwcfg --gui $(TB_TOP)_snapshot.wdb &
+	@if [ -f $(TB_TOP)_snapshot.wcfg ]; then \
+		cp $(TB_TOP)_snapshot.wcfg $(WORKDIR); \
+	fi
+	cd $(WORKDIR) && xsim -autoloadwcfg --gui $(TB_TOP)_snapshot.wdb &
 
 work:
 	@mkdir $(WORKDIR)

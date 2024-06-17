@@ -79,6 +79,8 @@ COMPILE_LIST += ${DV_ROOT}/svtb/torrence_types.sv
 COMPILE_LIST += $(SRC_FILES_RTL_ABS_PATH)
 COMPILE_LIST += $(SRC_FILES_DV_ABS_PATH)
 
+HDL_SENSITIVITY_LIST := $(shell find ${PROJECT_ROOT}/ -type f -name "*.sv")
+
 ####################################################################
 # Rules
 
@@ -86,9 +88,9 @@ $(WORKDIR)/%.so: $(DV_DPI_C)/%.c | work
 	@echo "----- Compiling DPI-C -----"
 	cd $(WORKDIR) && $(CC) $< -o $@ $(CFLAGS)
 
-$(WORKDIR)/xsim.dir/$(WORK)/$(WORK).rlx: $(COMPILE_LIST) | work
+$(WORKDIR)/xsim.dir/$(WORK)/$(WORK).rlx: $(HDL_SENSITIVITY_LIST) | work
 	@echo "----- Compiling HDL -----"
-	cd $(WORKDIR) && xvlog $(UVM_XVLOG_FLAGS) $^ $(XVLOG_FLAGS)
+	cd $(WORKDIR) && xvlog $(UVM_XVLOG_FLAGS) $(COMPILE_LIST) $(XVLOG_FLAGS)
 
 $(WORKDIR)/xsim.dir/$(TB_TOP)_snapshot/xsimk: $(DPIC_SHARED_OBJECTS) $(WORKDIR)/xsim.dir/$(WORK)/$(WORK).rlx
 	@echo "----- Elaborating HDL -----"

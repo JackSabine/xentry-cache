@@ -101,18 +101,14 @@ $(WORKDIR)/xsim.dir/$(TB_TOP)_snapshot/xsimk: $(DPIC_SHARED_OBJECTS) $(WORKDIR)/
 co: $(WORKDIR)/xsim.dir/$(TB_TOP)_snapshot/xsimk
 	@echo "----- Compilation complete -----"
 
-# (s)im (o)nly
-.PHONY: so
-so: | work
+.PHONY: sim
+sim: co
 	@echo "----- Running simulation -----"
 	@if [ ! -n "$$t" ]; then \
 		echo "UVM_TESTNAME is unset during 'so' step, specify with t=..."; \
 		exit 9; \
 	fi
 	cd $(WORKDIR) && xsim $(TB_TOP)_snapshot -tclbatch $(PROJECT_ROOT)/xsim_cfg.tcl --sv_seed $(s) $(UVM_XSIM_FLAGS); \
-
-.PHONY: sim
-sim: co so
 
 .PHONY: waves
 waves: | work

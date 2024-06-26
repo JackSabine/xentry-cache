@@ -20,6 +20,9 @@ ifndef PROJECT_ROOT
   $(error You must define the project root by sourcing project.sh)
 endif
 
+NPROCS = $(shell grep -c 'processor' /proc/cpuinfo)
+MAKEFLAGS += -j$(NPROCS)
+
 ####################################################################
 # Manual configure
 

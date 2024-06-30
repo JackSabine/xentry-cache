@@ -41,8 +41,8 @@ class memory_rsp_driver extends uvm_driver #(memory_transaction);
 
                 assert(std::randomize(is_hit) with {
                     is_hit dist {
-                        1 := 60,
-                        0 := 40
+                        1 := 95,
+                        0 := 05
                     };
                 }) else `uvm_fatal(get_full_name(), "Couldn't randomize is_hit")
 

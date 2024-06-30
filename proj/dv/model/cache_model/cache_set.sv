@@ -131,5 +131,6 @@ class cache_set;
         word_index = ofs / 4;
 
         this.blocks[hit_way].data[word_index] = data;
+        this.blocks[hit_way].dirty = 1'b1;
     endfunction
 endclass

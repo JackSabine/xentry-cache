@@ -66,10 +66,8 @@ module tb_top;
         @(posedge clk_enabled);
 
         forever begin
-            clk = 1'b1;
-            #(clk_config.t_high);
-            clk = 1'b0;
-            #(clk_config.t_low);
+            #(clk_config.t_half_period);
+            clk = ~clk;
         end
     end
 
@@ -79,12 +77,8 @@ module tb_top;
         dut_config.print();
 
         clk_config = clock_config::type_id::create("clk_config");
-        assert(
-            clk_config.randomize() with {
-                t_period == 2;
-                duty_cycle == 50;
-            }
-        ) else `uvm_fatal("tb_top", "Could not randomize clk_config")
+        assert(clk_config.randomize() with { t_period == 2; })
+            else `uvm_fatal("tb_top", "Could not randomize clk_config")
         `uvm_info("tb_top", clk_config.sprint(), UVM_LOW)
         clk_enabled = 1'b1;
 

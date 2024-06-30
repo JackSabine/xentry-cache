@@ -71,7 +71,7 @@ UVM_XSIM_FLAGS  := -testplusarg UVM_TESTNAME=$(t) -testplusarg UVM_VERBOSITY=$(v
 
 # Other/non-UVM flags
 XVLOG_FLAGS := --sv --incr --include $(DV_ROOT)/svtb --include $(DV_ROOT)/tests
-XELAB_FLAGS := --timescale=1ns/1ps --override_timeprecision $(DPIC_SV_LIB_FLAGS)
+XELAB_FLAGS := --timescale=1ns/1ns --override_timeprecision $(DPIC_SV_LIB_FLAGS)
 XSIM_FLAGS  :=
 
 # Compilation/dependency list for xvlog

@@ -109,15 +109,16 @@ class scoreboard extends uvm_scoreboard;
 
             pass = observed_tx.compare(expected_tx);
 
-            if (expected_tx.expect_hit) pass &= observed_tx.t_issued == observed_tx.t_fulfilled;
-            else                        pass &= observed_tx.t_issued != observed_tx.t_fulfilled;
+            if (expected_tx.expect_hit) pass &= (observed_tx.t_issued == observed_tx.t_fulfilled);
+            else                        pass &= (observed_tx.t_issued != observed_tx.t_fulfilled);
 
             printout_str = $sformatf(
                 {
-                    "\n\n<<<<< Observed  >>>>>\n%s",
-                    "\n<<<<< Expected >>>>>\n%s\n"
+                    "\n",
+                    "OBSERVED: %s\n",
+                    "EXPECTED: %s\n"
                 },
-                observed_tx.sprint(), expected_tx.sprint()
+                observed_tx.convert2string(), expected_tx.convert2string()
             );
 
             if (pass) begin

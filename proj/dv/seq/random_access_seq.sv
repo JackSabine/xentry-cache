@@ -18,7 +18,7 @@ class random_access_seq extends uvm_sequence #(memory_transaction);
 
     constraint blocks_con {
         soft num_blocks_to_access inside {[20:40]};
-        accesses_per_block == 4;
+        accesses_per_block == 8;
 
         block_array.size() == num_blocks_to_access;
         // unique {block_array}; -- unsupported in Vivado 2022.2

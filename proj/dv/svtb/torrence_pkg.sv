@@ -13,10 +13,7 @@ package torrence_pkg;
     `include "../seq/memory_transaction.sv"
     `include "../seq/reset_transaction.sv"
 
-    `include "../seq/one_memory_transaction_seq.sv"
-    `include "../seq/repeated_memory_transaction_seq.sv"
-    `include "../seq/trace_based_memory_seq.sv"
-    `include "../seq/word_masked_trace_based_memory_seq.sv"
+    `include "../seq/random_access_seq.sv"
     `include "../seq/memory_response_seq.sv"
     `include "../seq/reset_seq.sv"
 

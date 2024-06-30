@@ -1,4 +1,4 @@
-module dcache_controller import xentry_types::*; (
+module dcache_controller import torrence_types::*; (
     //// TOP LEVEL ////
     input wire clk,
     input wire reset,

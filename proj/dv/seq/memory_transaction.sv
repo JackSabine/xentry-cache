@@ -13,11 +13,17 @@ class memory_transaction extends uvm_sequence_item;
     logic expect_hit;
 
     constraint operation {
-        req_operation != MO_UNKNOWN;
+        req_operation inside {STORE, LOAD};
     }
 
     constraint loaded_value_con {
         soft req_loaded_word == 0;
+    }
+
+    constraint store_word_con {
+        if (req_operation != STORE) {
+            req_store_word == '1;
+        }
     }
 
     constraint req_address_granularity_by_req_size {
@@ -28,6 +34,8 @@ class memory_transaction extends uvm_sequence_item;
         } else if (req_size == BYTE) {
             req_address % 1 == 0;
         }
+
+        solve req_size before req_address;
     }
 
     function new(string name = "");
@@ -55,21 +63,8 @@ class memory_transaction extends uvm_sequence_item;
     `uvm_object_utils_end
 endclass
 
-class read_only_memory_transaction extends memory_transaction;
-    `uvm_object_utils(read_only_memory_transaction)
-
-    constraint read_only_con {
-        req_operation inside {LOAD};
-        req_store_word == '1;
-    }
-
-    function new(string name = "");
-        super.new(name);
-    endfunction
-endclass
-
-class icache_read_only_memory_transaction extends read_only_memory_transaction;
-    `uvm_object_utils(icache_read_only_memory_transaction)
+class word_memory_transaction extends memory_transaction;
+    `uvm_object_utils(word_memory_transaction)
 
     constraint word_only_con {
         req_size == WORD;
@@ -80,15 +75,11 @@ class icache_read_only_memory_transaction extends read_only_memory_transaction;
     endfunction
 endclass
 
-class read_and_flush_memory_transaction extends memory_transaction;
-    `uvm_object_utils(read_and_flush_memory_transaction)
+class icache_transaction extends word_memory_transaction;
+    `uvm_object_utils(icache_transaction)
 
     constraint read_only_con {
-        req_operation dist {
-            LOAD    := 90,
-            CLFLUSH := 10
-        };
-        req_store_word == '1;
+        req_operation == LOAD;
     }
 
     function new(string name = "");
@@ -96,15 +87,10 @@ class read_and_flush_memory_transaction extends memory_transaction;
     endfunction
 endclass
 
-class icache_memory_transaction extends read_and_flush_memory_transaction;
-    `uvm_object_utils(icache_memory_transaction)
-
-    constraint word_only_con {
-        req_size == WORD;
-    }
+class dcache_transaction extends word_memory_transaction;
+    `uvm_object_utils(dcache_transaction)
 
     function new(string name = "");
         super.new(name);
     endfunction
 endclass
-

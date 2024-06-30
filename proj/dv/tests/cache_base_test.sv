@@ -3,6 +3,8 @@ class cache_base_test extends uvm_test;
 
     environment mem_env;
 
+    typedef enum bit { ICACHE, DCACHE } target_agent_e;
+
     function new (string name, uvm_component parent);
         super.new(name, parent);
     endfunction
@@ -22,6 +24,10 @@ class cache_base_test extends uvm_test;
 
     endfunction
 
+    virtual function target_agent_e choose_active_agent();
+        return ICACHE;
+    endfunction
+
     task reset_phase(uvm_phase phase);
         reset_seq rst_seq;
 
@@ -36,19 +42,31 @@ class cache_base_test extends uvm_test;
     endtask
 
     task main_phase(uvm_phase phase);
-        trace_based_memory_seq mem_seq;
-        memory_response_seq mem_rsp_seq;
+        random_access_seq mem_seq;
+        memory_response_seq icache_mem_rsp_seq;
+        memory_response_seq dcache_mem_rsp_seq;
+        target_agent_e target;
 
         phase.raise_objection(this);
 
-        mem_seq = trace_based_memory_seq::type_id::create(.name("mem_seq"));
-        mem_rsp_seq = memory_response_seq::type_id::create(.name("mem_rsp_seq"));
+        icache_mem_rsp_seq = memory_response_seq::type_id::create(.name("icache_mem_rsp_seq"));
+        dcache_mem_rsp_seq = memory_response_seq::type_id::create(.name("dcache_mem_rsp_seq"));
+
+        mem_seq = random_access_seq::type_id::create(.name("mem_seq"));
         assert(mem_seq.randomize()) else `uvm_fatal(get_full_name(), "Couldn't randomize mem_seq")
-        `uvm_info("mem_seq", mem_seq.convert2string(), UVM_NONE)
-        mem_seq.print();
+        `uvm_info("mem_seq", mem_seq.sprint(), UVM_NONE)
+
+        target = choose_active_agent();
+
         fork
-            mem_seq.start(mem_env.creq_agent.creq_seqr);     // Runs until complete
-            mem_rsp_seq.start(mem_env.mrsp_agent.mrsp_seqr); // Runs forever
+            begin // Runs until complete
+                case (target)
+                ICACHE: mem_seq.start(mem_env.icache_creq_agent.creq_seqr);
+                DCACHE: mem_seq.start(mem_env.dcache_creq_agent.creq_seqr);
+                endcase
+            end
+            icache_mem_rsp_seq.start(mem_env.icache_mrsp_agent.mrsp_seqr); // Runs forever
+            dcache_mem_rsp_seq.start(mem_env.dcache_mrsp_agent.mrsp_seqr); // Runs forever
         join_any
 
         phase.drop_objection(this);

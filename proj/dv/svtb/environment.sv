@@ -1,8 +1,10 @@
 class environment extends uvm_env;
     `uvm_component_utils(environment)
 
-    cache_req_agent creq_agent;
-    memory_rsp_agent mrsp_agent;
+    cache_req_agent  icache_creq_agent;
+    memory_rsp_agent icache_mrsp_agent;
+    cache_req_agent  dcache_creq_agent;
+    memory_rsp_agent dcache_mrsp_agent;
     reset_agent rst_agent;
     scoreboard sb;
 
@@ -22,15 +24,21 @@ class environment extends uvm_env;
             .value(dut_memory_model)
         );
 
-        creq_agent  = cache_req_agent::type_id::create(.name("creq_agent"), .parent(this));
-        mrsp_agent = memory_rsp_agent::type_id::create(.name("mrsp_agent"), .parent(this));
+        icache_creq_agent  = cache_req_agent::type_id::create(.name("icache_creq_agent"), .parent(this));
+        icache_mrsp_agent = memory_rsp_agent::type_id::create(.name("icache_mrsp_agent"), .parent(this));
+        dcache_creq_agent  = cache_req_agent::type_id::create(.name("dcache_creq_agent"), .parent(this));
+        dcache_mrsp_agent = memory_rsp_agent::type_id::create(.name("dcache_mrsp_agent"), .parent(this));
         rst_agent  = reset_agent::type_id::create(.name("rst_agent"), .parent(this));
         sb         = scoreboard::type_id::create(.name("sb"), .parent(this));
     endfunction
 
     function void connect_phase(uvm_phase phase);
         super.connect_phase(phase);
-        creq_agent.creq_mon_ap.connect(sb.aport_mon);
-        creq_agent.creq_drv_ap.connect(sb.aport_drv);
+
+        icache_creq_agent.creq_mon_ap.connect(sb.aport_mon);
+        icache_creq_agent.creq_drv_ap.connect(sb.aport_drv);
+
+        dcache_creq_agent.creq_mon_ap.connect(sb.aport_mon);
+        dcache_creq_agent.creq_drv_ap.connect(sb.aport_drv);
     endfunction
 endclass

@@ -85,7 +85,7 @@ class scoreboard extends uvm_scoreboard;
         tr.t_issued    += clk_config.t_period;
         tr.t_fulfilled += clk_config.t_period;
 
-        `uvm_info("write_drv OUT ", tr.convert2string(), UVM_HIGH)
+        `uvm_info("write_drv OUT ", tr.convert2string(), UVM_MEDIUM)
         void'(expected_fifo.try_put(tr));
     endfunction
 

@@ -7,22 +7,22 @@
          <top_modules>
             <top_module name="std" />
             <top_module name="tb_top" />
+            <top_module name="torrence_pkg" />
+            <top_module name="torrence_types" />
             <top_module name="uvm_pkg" />
-            <top_module name="xentry_pkg" />
-            <top_module name="xentry_types" />
          </top_modules>
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="0.000 ns"></ZoomStartTime>
-      <ZoomEndTime time="923.001 ns"></ZoomEndTime>
-      <Cursor1Time time="210.000 ns"></Cursor1Time>
+      <ZoomStartTime time="55.928 ns"></ZoomStartTime>
+      <ZoomEndTime time="82.961 ns"></ZoomEndTime>
+      <Cursor1Time time="68.000 ns"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
       <NameColumnWidth column_width="239"></NameColumnWidth>
-      <ValueColumnWidth column_width="114"></ValueColumnWidth>
+      <ValueColumnWidth column_width="106"></ValueColumnWidth>
    </column_width_setting>
-   <WVObjectSize size="4" />
+   <WVObjectSize size="6" />
    <wvobject type="group" fp_name="group36">
       <obj_property name="label">rst_vi</obj_property>
       <obj_property name="DisplayName">label</obj_property>
@@ -36,99 +36,301 @@
          <obj_property name="ObjectShortName">clk</obj_property>
       </wvobject>
    </wvobject>
-   <wvobject type="group" fp_name="group12">
-      <obj_property name="label">req_vi</obj_property>
+   <wvobject type="group" fp_name="group53">
+      <obj_property name="label">ireq</obj_property>
       <obj_property name="DisplayName">label</obj_property>
-      <wvobject type="logic" fp_name="/tb_top/req_if/clk">
+      <wvobject type="logic" fp_name="/tb_top/icache_req_if/clk">
          <obj_property name="ElementShortName">clk</obj_property>
          <obj_property name="ObjectShortName">clk</obj_property>
       </wvobject>
-      <wvobject type="array" fp_name="/tb_top/req_if/req_address">
+      <wvobject type="array" fp_name="/tb_top/icache_req_if/req_address">
          <obj_property name="ElementShortName">req_address[31:0]</obj_property>
          <obj_property name="ObjectShortName">req_address[31:0]</obj_property>
       </wvobject>
-      <wvobject type="array" fp_name="/tb_top/req_if/req_operation">
+      <wvobject type="array" fp_name="/tb_top/icache_req_if/req_operation">
          <obj_property name="ElementShortName">req_operation[1:0]</obj_property>
          <obj_property name="ObjectShortName">req_operation[1:0]</obj_property>
       </wvobject>
-      <wvobject type="array" fp_name="/tb_top/req_if/req_size">
+      <wvobject type="array" fp_name="/tb_top/icache_req_if/req_size">
          <obj_property name="ElementShortName">req_size[1:0]</obj_property>
          <obj_property name="ObjectShortName">req_size[1:0]</obj_property>
       </wvobject>
-      <wvobject type="array" fp_name="/tb_top/req_if/req_store_word">
+      <wvobject type="array" fp_name="/tb_top/icache_req_if/req_store_word">
          <obj_property name="ElementShortName">req_store_word[31:0]</obj_property>
          <obj_property name="ObjectShortName">req_store_word[31:0]</obj_property>
       </wvobject>
-      <wvobject type="logic" fp_name="/tb_top/req_if/req_valid">
+      <wvobject type="logic" fp_name="/tb_top/icache_req_if/req_valid">
          <obj_property name="ElementShortName">req_valid</obj_property>
          <obj_property name="ObjectShortName">req_valid</obj_property>
       </wvobject>
-      <wvobject type="array" fp_name="/tb_top/req_if/req_loaded_word">
+      <wvobject type="array" fp_name="/tb_top/icache_req_if/req_loaded_word">
          <obj_property name="ElementShortName">req_loaded_word[31:0]</obj_property>
          <obj_property name="ObjectShortName">req_loaded_word[31:0]</obj_property>
       </wvobject>
-      <wvobject type="logic" fp_name="/tb_top/req_if/req_fulfilled">
+      <wvobject type="logic" fp_name="/tb_top/icache_req_if/req_fulfilled">
          <obj_property name="ElementShortName">req_fulfilled</obj_property>
          <obj_property name="ObjectShortName">req_fulfilled</obj_property>
       </wvobject>
-      <wvobject type="array" fp_name="/tb_top/req_if/XLEN">
+      <wvobject type="array" fp_name="/tb_top/icache_req_if/XLEN">
          <obj_property name="ElementShortName">XLEN[31:0]</obj_property>
          <obj_property name="ObjectShortName">XLEN[31:0]</obj_property>
       </wvobject>
    </wvobject>
-   <wvobject type="group" fp_name="group21">
-      <obj_property name="label">rsp_vi</obj_property>
+   <wvobject type="group" fp_name="group54">
+      <obj_property name="label">irsp</obj_property>
       <obj_property name="DisplayName">label</obj_property>
-      <obj_property name="isExpanded"></obj_property>
-      <wvobject type="logic" fp_name="/tb_top/rsp_if/clk">
+      <wvobject type="logic" fp_name="/tb_top/icache_rsp_if/clk">
          <obj_property name="ElementShortName">clk</obj_property>
          <obj_property name="ObjectShortName">clk</obj_property>
       </wvobject>
-      <wvobject type="array" fp_name="/tb_top/rsp_if/req_address">
+      <wvobject type="array" fp_name="/tb_top/icache_rsp_if/req_address">
          <obj_property name="ElementShortName">req_address[31:0]</obj_property>
          <obj_property name="ObjectShortName">req_address[31:0]</obj_property>
       </wvobject>
-      <wvobject type="array" fp_name="/tb_top/rsp_if/req_operation">
+      <wvobject type="array" fp_name="/tb_top/icache_rsp_if/req_operation">
          <obj_property name="ElementShortName">req_operation[1:0]</obj_property>
          <obj_property name="ObjectShortName">req_operation[1:0]</obj_property>
       </wvobject>
-      <wvobject type="array" fp_name="/tb_top/rsp_if/req_store_word">
+      <wvobject type="array" fp_name="/tb_top/icache_rsp_if/req_store_word">
          <obj_property name="ElementShortName">req_store_word[31:0]</obj_property>
          <obj_property name="ObjectShortName">req_store_word[31:0]</obj_property>
       </wvobject>
-      <wvobject type="logic" fp_name="/tb_top/rsp_if/req_valid">
+      <wvobject type="logic" fp_name="/tb_top/icache_rsp_if/req_valid">
          <obj_property name="ElementShortName">req_valid</obj_property>
          <obj_property name="ObjectShortName">req_valid</obj_property>
       </wvobject>
-      <wvobject type="array" fp_name="/tb_top/rsp_if/req_loaded_word">
+      <wvobject type="array" fp_name="/tb_top/icache_rsp_if/req_loaded_word">
          <obj_property name="ElementShortName">req_loaded_word[31:0]</obj_property>
          <obj_property name="ObjectShortName">req_loaded_word[31:0]</obj_property>
       </wvobject>
-      <wvobject type="logic" fp_name="/tb_top/rsp_if/req_fulfilled">
+      <wvobject type="logic" fp_name="/tb_top/icache_rsp_if/req_fulfilled">
          <obj_property name="ElementShortName">req_fulfilled</obj_property>
          <obj_property name="ObjectShortName">req_fulfilled</obj_property>
       </wvobject>
+      <wvobject type="array" fp_name="/tb_top/icache_rsp_if/XLEN">
+         <obj_property name="ElementShortName">XLEN[31:0]</obj_property>
+         <obj_property name="ObjectShortName">XLEN[31:0]</obj_property>
+      </wvobject>
    </wvobject>
-   <wvobject type="group" fp_name="group72">
-      <obj_property name="label">dut</obj_property>
+   <wvobject type="group" fp_name="group55">
+      <obj_property name="label">dreq</obj_property>
       <obj_property name="DisplayName">label</obj_property>
       <obj_property name="isExpanded"></obj_property>
-      <wvobject type="logic" fp_name="/tb_top/dut/perform_write">
+      <wvobject type="logic" fp_name="/tb_top/dcache_req_if/clk">
+         <obj_property name="ElementShortName">clk</obj_property>
+         <obj_property name="ObjectShortName">clk</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top/dcache_req_if/req_address">
+         <obj_property name="ElementShortName">req_address[31:0]</obj_property>
+         <obj_property name="ObjectShortName">req_address[31:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top/dcache_req_if/req_operation">
+         <obj_property name="ElementShortName">req_operation[1:0]</obj_property>
+         <obj_property name="ObjectShortName">req_operation[1:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top/dcache_req_if/req_size">
+         <obj_property name="ElementShortName">req_size[1:0]</obj_property>
+         <obj_property name="ObjectShortName">req_size[1:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top/dcache_req_if/req_store_word">
+         <obj_property name="ElementShortName">req_store_word[31:0]</obj_property>
+         <obj_property name="ObjectShortName">req_store_word[31:0]</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top/dcache_req_if/req_valid">
+         <obj_property name="ElementShortName">req_valid</obj_property>
+         <obj_property name="ObjectShortName">req_valid</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top/dcache_req_if/req_loaded_word">
+         <obj_property name="ElementShortName">req_loaded_word[31:0]</obj_property>
+         <obj_property name="ObjectShortName">req_loaded_word[31:0]</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top/dcache_req_if/req_fulfilled">
+         <obj_property name="ElementShortName">req_fulfilled</obj_property>
+         <obj_property name="ObjectShortName">req_fulfilled</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top/dcache_req_if/XLEN">
+         <obj_property name="ElementShortName">XLEN[31:0]</obj_property>
+         <obj_property name="ObjectShortName">XLEN[31:0]</obj_property>
+      </wvobject>
+   </wvobject>
+   <wvobject type="group" fp_name="group56">
+      <obj_property name="label">drsp</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <obj_property name="isExpanded"></obj_property>
+      <wvobject type="logic" fp_name="/tb_top/dcache_rsp_if/clk">
+         <obj_property name="ElementShortName">clk</obj_property>
+         <obj_property name="ObjectShortName">clk</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top/dcache_rsp_if/req_address">
+         <obj_property name="ElementShortName">req_address[31:0]</obj_property>
+         <obj_property name="ObjectShortName">req_address[31:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top/dcache_rsp_if/req_operation">
+         <obj_property name="ElementShortName">req_operation[1:0]</obj_property>
+         <obj_property name="ObjectShortName">req_operation[1:0]</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top/dcache_rsp_if/req_store_word">
+         <obj_property name="ElementShortName">req_store_word[31:0]</obj_property>
+         <obj_property name="ObjectShortName">req_store_word[31:0]</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top/dcache_rsp_if/req_valid">
+         <obj_property name="ElementShortName">req_valid</obj_property>
+         <obj_property name="ObjectShortName">req_valid</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top/dcache_rsp_if/req_loaded_word">
+         <obj_property name="ElementShortName">req_loaded_word[31:0]</obj_property>
+         <obj_property name="ObjectShortName">req_loaded_word[31:0]</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="/tb_top/dcache_rsp_if/req_fulfilled">
+         <obj_property name="ElementShortName">req_fulfilled</obj_property>
+         <obj_property name="ObjectShortName">req_fulfilled</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="/tb_top/dcache_rsp_if/XLEN">
+         <obj_property name="ElementShortName">XLEN[31:0]</obj_property>
+         <obj_property name="ObjectShortName">XLEN[31:0]</obj_property>
+      </wvobject>
+   </wvobject>
+   <wvobject type="group" fp_name="group42">
+      <obj_property name="label">dcache</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+      <obj_property name="isExpanded"></obj_property>
+      <wvobject type="logic" fp_name="/tb_top/dcache_dut/perform_write">
          <obj_property name="ElementShortName">perform_write</obj_property>
          <obj_property name="ObjectShortName">perform_write</obj_property>
       </wvobject>
-      <wvobject type="array" fp_name="/tb_top/dut/datapath/counter">
-         <obj_property name="ElementShortName">counter[2:0]</obj_property>
-         <obj_property name="ObjectShortName">counter[2:0]</obj_property>
-      </wvobject>
-      <wvobject type="array" fp_name="/tb_top/dut/datapath/write_bus">
-         <obj_property name="ElementShortName">write_bus[3:0][7:0]</obj_property>
-         <obj_property name="ObjectShortName">write_bus[3:0][7:0]</obj_property>
-      </wvobject>
-      <wvobject type="array" fp_name="/tb_top/dut/datapath/data_lines[16]">
-         <obj_property name="ElementShortName">[16][7:0][3:0][7:0]</obj_property>
-         <obj_property name="ObjectShortName">[16][7:0][3:0][7:0]</obj_property>
+      <wvobject type="array" fp_name="/tb_top/dcache_dut/datapath/data_lines">
+         <obj_property name="ElementShortName">data_lines[31:0][7:0][3:0][7:0]</obj_property>
+         <obj_property name="ObjectShortName">data_lines[31:0][7:0][3:0][7:0]</obj_property>
          <obj_property name="isExpanded"></obj_property>
+         <wvobject type="array" fp_name="/tb_top/dcache_dut/datapath/data_lines[31]">
+            <obj_property name="ElementShortName">[31][7:0][3:0][7:0]</obj_property>
+            <obj_property name="ObjectShortName">[31][7:0][3:0][7:0]</obj_property>
+         </wvobject>
+         <wvobject type="array" fp_name="/tb_top/dcache_dut/datapath/data_lines[30]">
+            <obj_property name="ElementShortName">[30][7:0][3:0][7:0]</obj_property>
+            <obj_property name="ObjectShortName">[30][7:0][3:0][7:0]</obj_property>
+         </wvobject>
+         <wvobject type="array" fp_name="/tb_top/dcache_dut/datapath/data_lines[29]">
+            <obj_property name="ElementShortName">[29][7:0][3:0][7:0]</obj_property>
+            <obj_property name="ObjectShortName">[29][7:0][3:0][7:0]</obj_property>
+            <obj_property name="isExpanded"></obj_property>
+         </wvobject>
+         <wvobject type="array" fp_name="/tb_top/dcache_dut/datapath/data_lines[28]">
+            <obj_property name="ElementShortName">[28][7:0][3:0][7:0]</obj_property>
+            <obj_property name="ObjectShortName">[28][7:0][3:0][7:0]</obj_property>
+         </wvobject>
+         <wvobject type="array" fp_name="/tb_top/dcache_dut/datapath/data_lines[27]">
+            <obj_property name="ElementShortName">[27][7:0][3:0][7:0]</obj_property>
+            <obj_property name="ObjectShortName">[27][7:0][3:0][7:0]</obj_property>
+         </wvobject>
+         <wvobject type="array" fp_name="/tb_top/dcache_dut/datapath/data_lines[26]">
+            <obj_property name="ElementShortName">[26][7:0][3:0][7:0]</obj_property>
+            <obj_property name="ObjectShortName">[26][7:0][3:0][7:0]</obj_property>
+         </wvobject>
+         <wvobject type="array" fp_name="/tb_top/dcache_dut/datapath/data_lines[25]">
+            <obj_property name="ElementShortName">[25][7:0][3:0][7:0]</obj_property>
+            <obj_property name="ObjectShortName">[25][7:0][3:0][7:0]</obj_property>
+         </wvobject>
+         <wvobject type="array" fp_name="/tb_top/dcache_dut/datapath/data_lines[24]">
+            <obj_property name="ElementShortName">[24][7:0][3:0][7:0]</obj_property>
+            <obj_property name="ObjectShortName">[24][7:0][3:0][7:0]</obj_property>
+         </wvobject>
+         <wvobject type="array" fp_name="/tb_top/dcache_dut/datapath/data_lines[23]">
+            <obj_property name="ElementShortName">[23][7:0][3:0][7:0]</obj_property>
+            <obj_property name="ObjectShortName">[23][7:0][3:0][7:0]</obj_property>
+         </wvobject>
+         <wvobject type="array" fp_name="/tb_top/dcache_dut/datapath/data_lines[22]">
+            <obj_property name="ElementShortName">[22][7:0][3:0][7:0]</obj_property>
+            <obj_property name="ObjectShortName">[22][7:0][3:0][7:0]</obj_property>
+         </wvobject>
+         <wvobject type="array" fp_name="/tb_top/dcache_dut/datapath/data_lines[21]">
+            <obj_property name="ElementShortName">[21][7:0][3:0][7:0]</obj_property>
+            <obj_property name="ObjectShortName">[21][7:0][3:0][7:0]</obj_property>
+         </wvobject>
+         <wvobject type="array" fp_name="/tb_top/dcache_dut/datapath/data_lines[20]">
+            <obj_property name="ElementShortName">[20][7:0][3:0][7:0]</obj_property>
+            <obj_property name="ObjectShortName">[20][7:0][3:0][7:0]</obj_property>
+         </wvobject>
+         <wvobject type="array" fp_name="/tb_top/dcache_dut/datapath/data_lines[19]">
+            <obj_property name="ElementShortName">[19][7:0][3:0][7:0]</obj_property>
+            <obj_property name="ObjectShortName">[19][7:0][3:0][7:0]</obj_property>
+         </wvobject>
+         <wvobject type="array" fp_name="/tb_top/dcache_dut/datapath/data_lines[18]">
+            <obj_property name="ElementShortName">[18][7:0][3:0][7:0]</obj_property>
+            <obj_property name="ObjectShortName">[18][7:0][3:0][7:0]</obj_property>
+         </wvobject>
+         <wvobject type="array" fp_name="/tb_top/dcache_dut/datapath/data_lines[17]">
+            <obj_property name="ElementShortName">[17][7:0][3:0][7:0]</obj_property>
+            <obj_property name="ObjectShortName">[17][7:0][3:0][7:0]</obj_property>
+         </wvobject>
+         <wvobject type="array" fp_name="/tb_top/dcache_dut/datapath/data_lines[16]">
+            <obj_property name="ElementShortName">[16][7:0][3:0][7:0]</obj_property>
+            <obj_property name="ObjectShortName">[16][7:0][3:0][7:0]</obj_property>
+         </wvobject>
+         <wvobject type="array" fp_name="/tb_top/dcache_dut/datapath/data_lines[15]">
+            <obj_property name="ElementShortName">[15][7:0][3:0][7:0]</obj_property>
+            <obj_property name="ObjectShortName">[15][7:0][3:0][7:0]</obj_property>
+         </wvobject>
+         <wvobject type="array" fp_name="/tb_top/dcache_dut/datapath/data_lines[14]">
+            <obj_property name="ElementShortName">[14][7:0][3:0][7:0]</obj_property>
+            <obj_property name="ObjectShortName">[14][7:0][3:0][7:0]</obj_property>
+         </wvobject>
+         <wvobject type="array" fp_name="/tb_top/dcache_dut/datapath/data_lines[13]">
+            <obj_property name="ElementShortName">[13][7:0][3:0][7:0]</obj_property>
+            <obj_property name="ObjectShortName">[13][7:0][3:0][7:0]</obj_property>
+         </wvobject>
+         <wvobject type="array" fp_name="/tb_top/dcache_dut/datapath/data_lines[12]">
+            <obj_property name="ElementShortName">[12][7:0][3:0][7:0]</obj_property>
+            <obj_property name="ObjectShortName">[12][7:0][3:0][7:0]</obj_property>
+         </wvobject>
+         <wvobject type="array" fp_name="/tb_top/dcache_dut/datapath/data_lines[11]">
+            <obj_property name="ElementShortName">[11][7:0][3:0][7:0]</obj_property>
+            <obj_property name="ObjectShortName">[11][7:0][3:0][7:0]</obj_property>
+         </wvobject>
+         <wvobject type="array" fp_name="/tb_top/dcache_dut/datapath/data_lines[10]">
+            <obj_property name="ElementShortName">[10][7:0][3:0][7:0]</obj_property>
+            <obj_property name="ObjectShortName">[10][7:0][3:0][7:0]</obj_property>
+         </wvobject>
+         <wvobject type="array" fp_name="/tb_top/dcache_dut/datapath/data_lines[9]">
+            <obj_property name="ElementShortName">[9][7:0][3:0][7:0]</obj_property>
+            <obj_property name="ObjectShortName">[9][7:0][3:0][7:0]</obj_property>
+         </wvobject>
+         <wvobject type="array" fp_name="/tb_top/dcache_dut/datapath/data_lines[8]">
+            <obj_property name="ElementShortName">[8][7:0][3:0][7:0]</obj_property>
+            <obj_property name="ObjectShortName">[8][7:0][3:0][7:0]</obj_property>
+         </wvobject>
+         <wvobject type="array" fp_name="/tb_top/dcache_dut/datapath/data_lines[7]">
+            <obj_property name="ElementShortName">[7][7:0][3:0][7:0]</obj_property>
+            <obj_property name="ObjectShortName">[7][7:0][3:0][7:0]</obj_property>
+         </wvobject>
+         <wvobject type="array" fp_name="/tb_top/dcache_dut/datapath/data_lines[6]">
+            <obj_property name="ElementShortName">[6][7:0][3:0][7:0]</obj_property>
+            <obj_property name="ObjectShortName">[6][7:0][3:0][7:0]</obj_property>
+         </wvobject>
+         <wvobject type="array" fp_name="/tb_top/dcache_dut/datapath/data_lines[5]">
+            <obj_property name="ElementShortName">[5][7:0][3:0][7:0]</obj_property>
+            <obj_property name="ObjectShortName">[5][7:0][3:0][7:0]</obj_property>
+         </wvobject>
+         <wvobject type="array" fp_name="/tb_top/dcache_dut/datapath/data_lines[4]">
+            <obj_property name="ElementShortName">[4][7:0][3:0][7:0]</obj_property>
+            <obj_property name="ObjectShortName">[4][7:0][3:0][7:0]</obj_property>
+         </wvobject>
+         <wvobject type="array" fp_name="/tb_top/dcache_dut/datapath/data_lines[3]">
+            <obj_property name="ElementShortName">[3][7:0][3:0][7:0]</obj_property>
+            <obj_property name="ObjectShortName">[3][7:0][3:0][7:0]</obj_property>
+         </wvobject>
+         <wvobject type="array" fp_name="/tb_top/dcache_dut/datapath/data_lines[2]">
+            <obj_property name="ElementShortName">[2][7:0][3:0][7:0]</obj_property>
+            <obj_property name="ObjectShortName">[2][7:0][3:0][7:0]</obj_property>
+         </wvobject>
+         <wvobject type="array" fp_name="/tb_top/dcache_dut/datapath/data_lines[1]">
+            <obj_property name="ElementShortName">[1][7:0][3:0][7:0]</obj_property>
+            <obj_property name="ObjectShortName">[1][7:0][3:0][7:0]</obj_property>
+         </wvobject>
+         <wvobject type="array" fp_name="/tb_top/dcache_dut/datapath/data_lines[0]">
+            <obj_property name="ElementShortName">[0][7:0][3:0][7:0]</obj_property>
+            <obj_property name="ObjectShortName">[0][7:0][3:0][7:0]</obj_property>
+         </wvobject>
       </wvobject>
    </wvobject>
 </wave_config>

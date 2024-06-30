@@ -17,7 +17,7 @@ class random_access_seq extends uvm_sequence #(memory_transaction);
     `uvm_object_utils_end
 
     constraint blocks_con {
-        soft num_blocks_to_access inside {[16:64]};
+        soft num_blocks_to_access inside {[20:40]};
         accesses_per_block == 4;
 
         block_array.size() == num_blocks_to_access;

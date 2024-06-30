@@ -1,6 +1,7 @@
 import torrence_types::*;
 
 class memory_transaction extends uvm_sequence_item;
+    `uvm_object_utils(memory_transaction)
 
     rand uint32_t                req_address;
     rand memory_operation_e      req_operation;
@@ -46,16 +47,33 @@ class memory_transaction extends uvm_sequence_item;
         return s;
     endfunction
 
-    `uvm_object_utils_begin(memory_transaction)
-        `uvm_field_enum(memory_operation_size_e, req_size,      UVM_ALL_ON)
-        `uvm_field_enum(memory_operation_e,      req_operation, UVM_ALL_ON)
-        `uvm_field_int(req_address,     UVM_ALL_ON | UVM_HEX)
-        `uvm_field_int(req_store_word,  UVM_ALL_ON | UVM_HEX)
-        `uvm_field_int(req_loaded_word, UVM_ALL_ON | UVM_HEX)
-        `uvm_field_int(t_issued,        UVM_ALL_ON | UVM_DEC) // Should be same
-        `uvm_field_int(t_fulfilled,     UVM_ALL_ON | UVM_DEC | UVM_NOCOMPARE) // Can be x if scoreboard cannot predict finish time
-        `uvm_field_int(expect_hit,      UVM_ALL_ON | UVM_BIN | UVM_NOCOMPARE) // Not populated by monitor
-    `uvm_object_utils_end
+    virtual function void do_copy(uvm_object rhs);
+        memory_transaction _obj;
+        $cast(_obj, rhs);
+
+        req_address     = _obj.req_address;
+        req_operation   = _obj.req_operation;
+        req_size        = _obj.req_size;
+        req_store_word  = _obj.req_store_word;
+        req_loaded_word = _obj.req_loaded_word;
+        t_issued        = _obj.t_issued;
+        t_fulfilled     = _obj.t_fulfilled;
+        expect_hit      = _obj.expect_hit;
+    endfunction
+
+    virtual function bit do_compare(uvm_object rhs, uvm_comparer comparer);
+        memory_transaction _obj;
+        $cast(_obj, rhs);
+
+        // Don't compare t_fulfilled and expect_hit
+        return
+            req_address     == _obj.req_address     &
+            req_operation   == _obj.req_operation   &
+            req_size        == _obj.req_size        &
+            req_store_word  == _obj.req_store_word  &
+            req_loaded_word == _obj.req_loaded_word &
+            t_issued        == _obj.t_issued        ;
+    endfunction
 endclass
 
 class word_memory_transaction extends memory_transaction;

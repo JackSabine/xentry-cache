@@ -26,17 +26,12 @@ class memory_transaction extends uvm_sequence_item;
         }
     }
 
-    constraint req_address_granularity_by_req_size {
-        if (req_size == WORD) {
-            req_address % 4 == 0;
-        } else if (req_size == HALF) {
-            req_address % 2 == 0;
-        } else if (req_size == BYTE) {
-            req_address % 1 == 0;
-        }
-
-        solve req_size before req_address;
-    }
+    function void post_randomize();
+        case (req_size)
+        WORD: req_address &= ~32'b11;
+        HALF: req_address &= ~32'b01;
+        endcase
+    endfunction
 
     function new(string name = "");
         super.new(name);

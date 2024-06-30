@@ -63,7 +63,6 @@ class random_access_seq extends uvm_sequence #(memory_transaction);
             assert(std::randomize(block) with { block inside {block_array}; }) else `uvm_fatal(get_full_name(), "Couldn't randomize block")
 
             repeat(accesses_per_block) begin
-                // Fails happen when constraint fails
                 `uvm_do_with(req, { req_address inside {[block : block+offset_mask]}; })
             end
         end

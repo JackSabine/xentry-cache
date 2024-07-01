@@ -57,13 +57,17 @@ class random_access_seq extends uvm_sequence #(memory_transaction);
     task body();
         uint32_t block;
 
-        `uvm_info(get_type_name(), $sformatf("%s is starting", get_sequence_path()), UVM_MEDIUM)
+        `uvm_info(get_type_name(), $sformatf("%s is starting", get_name()), UVM_MEDIUM)
 
         repeat (num_blocks_to_access) begin
             assert(std::randomize(block) with { block inside {block_array}; }) else `uvm_fatal(get_full_name(), "Couldn't randomize block")
 
             repeat(accesses_per_block) begin
-                `uvm_do_with(req, { req_address inside {[block : block+offset_mask]}; })
+                // Must create with a context in case of instance overriding
+                req = memory_transaction::type_id::create(.name("req"), .contxt(get_full_name()));
+                start_item(req);
+                assert(req.randomize() with { req_address inside {[block : block+offset_mask]}; }) else `uvm_fatal(get_full_name(), "Couldn't randomize req")
+                finish_item(req);
             end
         end
     endtask

@@ -12,6 +12,12 @@ package torrence_types;
         MO_UNKNOWN = 2'bxx
     } memory_operation_e;
 
+    typedef enum bit [1:0] {
+        UNASSIGNED,
+        ICACHE,
+        DCACHE
+    } l1_type_e;
+
     typedef int unsigned uint32_t;
     typedef byte uint8_t;
 endpackage

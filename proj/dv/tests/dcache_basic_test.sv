@@ -5,7 +5,7 @@ class dcache_basic_test extends cache_base_test;
         super.new(name, parent);
     endfunction
 
-    virtual function target_agent_e choose_active_agent();
+    virtual function l1_type_e choose_active_agent();
         return DCACHE;
     endfunction
 

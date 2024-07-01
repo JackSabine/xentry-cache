@@ -3,8 +3,6 @@ class cache_base_test extends uvm_test;
 
     environment mem_env;
 
-    typedef enum bit { ICACHE, DCACHE } target_agent_e;
-
     function new (string name, uvm_component parent);
         super.new(name, parent);
     endfunction
@@ -17,6 +15,10 @@ class cache_base_test extends uvm_test;
     function void build_phase(uvm_phase phase);
         super.build_phase(phase);
         mem_env = environment::type_id::create(.name("mem_env"), .parent(this));
+    endfunction
+
+    function void end_of_elaboration_phase(uvm_phase phase);
+        super.end_of_elaboration_phase(phase);
         set_transaction_type();
     endfunction
 
@@ -24,8 +26,8 @@ class cache_base_test extends uvm_test;
 
     endfunction
 
-    virtual function target_agent_e choose_active_agent();
-        return ICACHE;
+    virtual function l1_type_e choose_active_agent();
+        return UNASSIGNED;
     endfunction
 
     task reset_phase(uvm_phase phase);
@@ -41,11 +43,11 @@ class cache_base_test extends uvm_test;
         phase.drop_objection(this);
     endtask
 
-    task main_phase(uvm_phase phase);
+    virtual task main_phase(uvm_phase phase);
         random_access_seq mem_seq;
         memory_response_seq icache_mem_rsp_seq;
         memory_response_seq dcache_mem_rsp_seq;
-        target_agent_e target;
+        l1_type_e target;
 
         phase.raise_objection(this);
 

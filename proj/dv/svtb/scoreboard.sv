@@ -1,14 +1,20 @@
-`uvm_analysis_imp_decl( _drv )
-`uvm_analysis_imp_decl( _mon )
+`uvm_analysis_imp_decl( _icache_drv )
+`uvm_analysis_imp_decl( _icache_mon )
+`uvm_analysis_imp_decl( _dcache_drv )
+`uvm_analysis_imp_decl( _dcache_mon )
 
 class scoreboard extends uvm_scoreboard;
     `uvm_component_utils(scoreboard)
 
-    uvm_analysis_imp_drv #(memory_transaction, scoreboard) aport_drv;
-    uvm_analysis_imp_mon #(memory_transaction, scoreboard) aport_mon;
+    uvm_analysis_imp_icache_drv #(memory_transaction, scoreboard) aport_icache_drv;
+    uvm_analysis_imp_icache_mon #(memory_transaction, scoreboard) aport_icache_mon;
+    uvm_analysis_imp_dcache_drv #(memory_transaction, scoreboard) aport_dcache_drv;
+    uvm_analysis_imp_dcache_mon #(memory_transaction, scoreboard) aport_dcache_mon;
 
-    uvm_tlm_fifo #(memory_transaction) expected_fifo;
-    uvm_tlm_fifo #(memory_transaction) observed_fifo;
+    uvm_tlm_fifo #(memory_transaction) icache_expected_fifo;
+    uvm_tlm_fifo #(memory_transaction) icache_observed_fifo;
+    uvm_tlm_fifo #(memory_transaction) dcache_expected_fifo;
+    uvm_tlm_fifo #(memory_transaction) dcache_observed_fifo;
 
     cache_wrapper cache_model;
     cache_config dut_config;
@@ -19,21 +25,26 @@ class scoreboard extends uvm_scoreboard;
 
     uint32_t vector_count, pass_count, fail_count;
     uint32_t load_count, store_count, clflush_count;
+    uint32_t icache_count, dcache_count;
 
     function void build_phase(uvm_phase phase);
         super.build_phase(phase);
-        aport_drv = new("aport_drv", this);
-        aport_mon = new("aport_mon", this);
-        expected_fifo = new("expected_fifo", this);
-        observed_fifo = new("observed_fifo", this);
+
+        aport_icache_drv = new("aport_icache_drv", this);
+        aport_icache_mon = new("aport_icache_mon", this);
+        icache_expected_fifo = new("icache_expected_fifo", this);
+        icache_observed_fifo = new("icache_observed_fifo", this);
+
+        aport_dcache_drv = new("aport_dcache_drv", this);
+        aport_dcache_mon = new("aport_dcache_mon", this);
+        dcache_expected_fifo = new("dcache_expected_fifo", this);
+        dcache_observed_fifo = new("dcache_observed_fifo", this);
+
         cache_model = new(dut_config.cache_size, dut_config.line_size, dut_config.assoc);
     endfunction
 
     function new (string name, uvm_component parent);
         super.new(name, parent);
-        load_count = 0;
-        store_count = 0;
-        clflush_count = 0;
 
         assert(uvm_config_db #(cache_config)::get(
             .cntxt(null),
@@ -50,7 +61,7 @@ class scoreboard extends uvm_scoreboard;
         )) else `uvm_fatal(get_full_name(), "Couldn't get clock_config from config db")
     endfunction
 
-    function void write_drv(memory_transaction tr);
+    function void predictor(memory_transaction tr, ref uvm_tlm_fifo #(memory_transaction) expected_fifo);
         // tr has t_issued
         // use to predict t_fulfilled
 
@@ -89,22 +100,40 @@ class scoreboard extends uvm_scoreboard;
         void'(expected_fifo.try_put(tr));
     endfunction
 
-    function void write_mon(memory_transaction tr);
+    function void observer(memory_transaction tr, ref uvm_tlm_fifo #(memory_transaction) observed_fifo);
         // tr has t_issued and t_fulfilled
         `uvm_info("write_mon OUT ", tr.convert2string(), UVM_HIGH)
         void'(observed_fifo.try_put(tr));
     endfunction
 
-    task run_phase(uvm_phase phase);
+    function void write_icache_drv(memory_transaction tr);
+        predictor(tr, icache_expected_fifo);
+    endfunction
+
+    function void write_icache_mon(memory_transaction tr);
+        observer(tr, icache_observed_fifo);
+    endfunction
+
+    function void write_dcache_drv(memory_transaction tr);
+        predictor(tr, dcache_expected_fifo);
+    endfunction
+
+    function void write_dcache_mon(memory_transaction tr);
+        observer(tr, dcache_observed_fifo);
+    endfunction
+
+    task comparer(ref uvm_tlm_fifo #(memory_transaction) expected_fifo, ref uvm_tlm_fifo #(memory_transaction) observed_fifo, input l1_type_e cache_type);
         memory_transaction expected_tx, observed_tx;
         bit pass;
-
         string printout_str;
+        string name;
+
+        name = $sformatf("scoreboard comparer<%s>", cache_type.name());
 
         forever begin
-            `uvm_info("scoreboard run task", "WAITING for expected output", UVM_DEBUG)
+            `uvm_info(name, "WAITING for expected output", UVM_DEBUG)
             expected_fifo.get(expected_tx);
-            `uvm_info("scoreboard run task", "WAITING for observed output", UVM_DEBUG)
+            `uvm_info(name, "WAITING for observed output", UVM_DEBUG)
             observed_fifo.get(observed_tx);
 
             pass = observed_tx.compare(expected_tx);
@@ -128,7 +157,22 @@ class scoreboard extends uvm_scoreboard;
                 vector_fail();
                 `uvm_error("FAIL: ", printout_str)
             end
+
+            assert(expected_tx.origin == cache_type)
+                else `uvm_error(name, $sformatf("Received driven transaction from incorrect origin (%s)", expected_tx.origin.name()))
+
+            case(cache_type)
+                ICACHE: icache_count++;
+                DCACHE: dcache_count++;
+            endcase
         end
+    endtask
+
+    task run_phase(uvm_phase phase);
+        fork
+            comparer(icache_expected_fifo, icache_observed_fifo, ICACHE);
+            comparer(dcache_expected_fifo, dcache_observed_fifo, DCACHE);
+        join
     endtask
 
     function void report_phase(uvm_phase phase);
@@ -140,11 +184,16 @@ class scoreboard extends uvm_scoreboard;
             {
                 "* load_count:    %0d\n",
                 "* store_count:   %0d\n",
-                "* clflush_count: %0d\n"
+                "* clflush_count: %0d\n",
+                "\n",
+                "* icache transactions: %0d\n",
+                "* dcache transactions: %0d\n"
             },
             load_count,
             store_count,
-            clflush_count
+            clflush_count,
+            icache_count,
+            dcache_count
         );
 
         if ((vector_count != 0) && (fail_count == 0)) begin

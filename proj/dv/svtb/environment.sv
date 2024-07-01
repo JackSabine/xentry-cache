@@ -35,10 +35,10 @@ class environment extends uvm_env;
     function void connect_phase(uvm_phase phase);
         super.connect_phase(phase);
 
-        icache_creq_agent.creq_mon_ap.connect(sb.aport_mon);
-        icache_creq_agent.creq_drv_ap.connect(sb.aport_drv);
+        icache_creq_agent.creq_mon_ap.connect(sb.aport_icache_mon);
+        icache_creq_agent.creq_drv_ap.connect(sb.aport_icache_drv);
 
-        dcache_creq_agent.creq_mon_ap.connect(sb.aport_mon);
-        dcache_creq_agent.creq_drv_ap.connect(sb.aport_drv);
+        dcache_creq_agent.creq_mon_ap.connect(sb.aport_dcache_mon);
+        dcache_creq_agent.creq_drv_ap.connect(sb.aport_dcache_drv);
     endfunction
 endclass

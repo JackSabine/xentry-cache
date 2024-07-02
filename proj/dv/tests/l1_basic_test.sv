@@ -6,18 +6,15 @@ class l1_basic_test extends cache_base_test;
     endfunction
 
     virtual function void set_transaction_type();
-        uvm_factory factory;
-        factory = uvm_factory::get();
-
-        factory.print();
-
         `uvm_info(get_name(), "Overriding types", UVM_LOW)
+
+        `print_uvm_factory()
 
         // memory_transaction type is overriden when created in any component/sequence under the following agents
         memory_transaction::type_id::set_inst_override(icache_transaction::get_type(), {mem_env.icache_creq_agent.get_full_name(), ".*"});
         memory_transaction::type_id::set_inst_override(dcache_transaction::get_type(), {mem_env.dcache_creq_agent.get_full_name(), ".*"});
 
-        factory.print(.all_types(0));
+        `print_uvm_factory(0)
     endfunction
 
     virtual task main_phase(uvm_phase phase);

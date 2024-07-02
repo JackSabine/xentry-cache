@@ -82,7 +82,7 @@ COMPILE_LIST += ${DV_ROOT}/svtb/torrence_types.sv
 COMPILE_LIST += $(SRC_FILES_RTL_ABS_PATH)
 COMPILE_LIST += $(SRC_FILES_DV_ABS_PATH)
 
-HDL_SENSITIVITY_LIST := $(shell find ${PROJECT_ROOT}/ -type f -name "*.sv")
+HDL_SENSITIVITY_LIST := $(shell find ${PROJECT_ROOT}/ -type f \( -name "*.sv" -o -name "*.svh" \))
 
 ####################################################################
 # Rules

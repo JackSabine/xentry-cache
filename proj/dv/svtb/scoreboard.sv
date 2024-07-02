@@ -61,7 +61,7 @@ class scoreboard extends uvm_scoreboard;
         )) else `uvm_fatal(get_full_name(), "Couldn't get clock_config from config db")
     endfunction
 
-    function void predictor(memory_transaction tr, ref uvm_tlm_fifo #(memory_transaction) expected_fifo);
+    function void predictor(memory_transaction tr, ref uvm_tlm_fifo #(memory_transaction) expected_fifo, input l1_type_e cache_type);
         // tr has t_issued
         // use to predict t_fulfilled
 
@@ -70,12 +70,12 @@ class scoreboard extends uvm_scoreboard;
         case (tr.req_operation)
             LOAD: begin
                 load_count++;
-                resp = cache_model.read(tr.req_address);
+                resp = cache_model.read(tr.req_address, cache_type);
             end
 
             STORE: begin
                 store_count++;
-                resp = cache_model.write(tr.req_address, tr.req_store_word);
+                resp = cache_model.write(tr.req_address, tr.req_store_word, cache_type);
             end
 
             CLFLUSH: begin
@@ -107,7 +107,7 @@ class scoreboard extends uvm_scoreboard;
     endfunction
 
     function void write_icache_drv(memory_transaction tr);
-        predictor(tr, icache_expected_fifo);
+        predictor(tr, icache_expected_fifo, ICACHE);
     endfunction
 
     function void write_icache_mon(memory_transaction tr);
@@ -115,7 +115,7 @@ class scoreboard extends uvm_scoreboard;
     endfunction
 
     function void write_dcache_drv(memory_transaction tr);
-        predictor(tr, dcache_expected_fifo);
+        predictor(tr, dcache_expected_fifo, DCACHE);
     endfunction
 
     function void write_dcache_mon(memory_transaction tr);

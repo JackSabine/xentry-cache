@@ -1,10 +1,11 @@
 class cache_wrapper;
-    local cache l1;
+    local cache icache, dcache;
     local main_memory memory;
 
     function new (uint32_t l1_size, uint32_t l1_block_size, uint32_t l1_assoc);
         memory = new;
-        l1 = new(l1_size, l1_block_size, l1_assoc, memory);
+        icache = new(l1_size, l1_block_size, l1_assoc, memory);
+        dcache = new(l1_size, l1_block_size, l1_assoc, memory);
     endfunction
 
     local function uint32_t gen_bitmask(uint8_t width);
@@ -43,24 +44,37 @@ class cache_wrapper;
         return read_data;
     endfunction
 
-    function cache_response_t read(uint32_t addr);
+    function cache_response_t read(uint32_t addr, l1_type_e cache_type);
         cache_response_t resp;
 
-        resp = l1.read(addr);
+        case (cache_type)
+            ICACHE: resp = icache.read(addr);
+            DCACHE: resp = dcache.read(addr);
+            default: `uvm_fatal("cache_wrapper::read", $sformatf("unimplemented cache_type %s", cache_type.name()))
+        endcase
+
         `uvm_info("cache_wrapper", $sformatf("l1.read(%8H) returned %8H (hit = %B)", addr, resp.req_word, resp.is_hit), UVM_HIGH)
         resp.req_word = select_read_data(resp.req_word, WORD, 0);
         return resp;
     endfunction
 
-    function cache_response_t write(uint32_t addr, uint32_t data);
+    function cache_response_t write(uint32_t addr, uint32_t data, l1_type_e cache_type);
         cache_response_t read_resp, write_resp;
         uint32_t read_data, data_to_write;
 
-        read_resp = l1.read(addr);
+        case (cache_type)
+            ICACHE: read_resp = icache.read(addr);
+            DCACHE: read_resp = dcache.read(addr);
+            default: `uvm_fatal("cache_wrapper::write", $sformatf("unimplemented cache_type %s", cache_type.name()))
+        endcase
 
         data_to_write = insert_write_data(read_resp.req_word, data, WORD, 0);
 
-        write_resp = l1.write(addr, data_to_write);
+        case (cache_type)
+            ICACHE: write_resp = icache.write(addr, data_to_write);
+            DCACHE: write_resp = dcache.write(addr, data_to_write);
+            default: `uvm_fatal("cache_wrapper::write", $sformatf("unimplemented cache_type %s", cache_type.name()))
+        endcase
 
         write_resp.is_hit = read_resp.is_hit; // write_resp will always hit because we already read, so check read_resp instead
 

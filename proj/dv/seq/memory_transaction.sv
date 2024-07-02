@@ -72,14 +72,15 @@ class memory_transaction extends uvm_sequence_item;
         memory_transaction _obj;
         $cast(_obj, rhs);
 
-        // Don't compare t_fulfilled, expect_hit, origin
+        // Don't compare t_fulfilled, expect_hit
         return
             req_address     == _obj.req_address     &
             req_operation   == _obj.req_operation   &
             req_size        == _obj.req_size        &
             req_store_word  == _obj.req_store_word  &
             req_loaded_word == _obj.req_loaded_word &
-            t_issued        == _obj.t_issued        ;
+            t_issued        == _obj.t_issued        &
+            origin          == _obj.origin          ;
     endfunction
 endclass
 
@@ -108,6 +109,7 @@ class icache_transaction extends word_memory_transaction;
 
     function new(string name = "");
         super.new(name);
+        origin = ICACHE;
     endfunction
 endclass
 
@@ -120,5 +122,6 @@ class dcache_transaction extends word_memory_transaction;
 
     function new(string name = "");
         super.new(name);
+        origin = DCACHE;
     endfunction
 endclass
